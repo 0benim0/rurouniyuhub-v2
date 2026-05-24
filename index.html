@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RurouniYu Hub V2</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+<style>
+:root{
+  --bg:#080b14;--surface:#0e1420;--surface2:#141c2e;--surface3:#1a2440;
+  --accent:#00d9ff;--accent2:#4fffb0;--accent3:#ff6b6b;--accent4:#ffd700;
+  --text:#e8f4ff;--muted:#8899bb;--border:rgba(0,217,255,0.12);--border2:rgba(0,217,255,0.28);
+  --glow:0 0 20px rgba(0,217,255,0.35);--glow2:0 0 40px rgba(0,217,255,0.15);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,217,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,217,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* BANNER */
+.testnet-banner{position:fixed;top:0;left:0;right:0;z-index:300;background:linear-gradient(90deg,#ff1744,#d32f2f,#ff1744);background-size:200% 100%;animation:bannerMove 3s linear infinite;padding:7px;text-align:center;font-size:10px;font-weight:700;color:#fff;letter-spacing:2px;text-transform:uppercase;}
+@keyframes bannerMove{0%{background-position:0%}100%{background-position:200%}}
+
+/* HEADER */
+header{position:fixed;top:30px;left:0;right:0;z-index:200;background:rgba(8,11,20,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border2);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+.logo{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:900;color:var(--accent);text-shadow:var(--glow);letter-spacing:2px;white-space:nowrap;}
+.logo span{color:var(--accent4);}
+.header-right{display:flex;gap:8px;align-items:center;}
+.faucet-btn{padding:6px 12px;background:transparent;border:1px solid var(--accent);border-radius:6px;color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.faucet-btn:hover{background:var(--accent);color:#000;}
+.chain-select{padding:6px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;}
+.wallet-btn{padding:6px 14px;background:var(--accent);color:#000;border:none;border-radius:6px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.wallet-btn:hover{box-shadow:var(--glow);}
+.wallet-btn.connected{background:var(--accent2);color:#000;}
+
+/* NAV */
+nav{position:fixed;top:88px;left:0;right:0;z-index:199;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;overflow-x:auto;}
+nav::-webkit-scrollbar{display:none;}
+.nav-btn{flex:1;min-width:60px;padding:12px 6px;background:transparent;border:none;border-bottom:2px solid transparent;color:#ffffff;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+.nav-btn:hover{color:var(--accent);}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* MAIN */
+main{margin-top:148px;padding:20px;max-width:960px;margin-left:auto;margin-right:auto;position:relative;z-index:1;}
+.page{display:none;}
+.page.active{display:block;animation:fadeIn 0.3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+h1{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--accent);text-shadow:var(--glow);margin-bottom:5px;letter-spacing:1px;}
+.subtitle{color:var(--muted);font-size:11px;margin-bottom:20px;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.5;}
+.card h2{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:12px;letter-spacing:1px;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin-bottom:14px;}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px 10px;text-align:center;transition:all 0.2s;}
+.stat:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--glow2);}
+.stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.stat-value{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--accent);}
+
+/* BUTTONS */
+.btn{display:inline-block;padding:9px 18px;background:var(--accent);color:#000;border:none;border-radius:8px;font-family:'Space Mono',monospace;font-weight:700;font-size:11px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:1px;}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--glow);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-green{background:var(--accent2);}
+.btn-green:hover{box-shadow:0 0 20px rgba(79,255,176,0.4);}
+.btn-gold{background:var(--accent4);}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);transform:none;box-shadow:none;}
+
+/* ALERTS */
+.alert{padding:10px 13px;border-radius:8px;font-size:11px;margin-bottom:10px;border-left:3px solid;line-height:1.6;}
+.alert-error{background:rgba(255,107,107,0.1);border-color:var(--accent3);color:var(--accent3);}
+.alert-success{background:rgba(79,255,176,0.1);border-color:var(--accent2);color:var(--accent2);}
+.alert-info{background:rgba(0,217,255,0.08);border-color:var(--accent);color:var(--accent);}
+.alert-gold{background:rgba(255,215,0,0.1);border-color:var(--accent4);color:var(--accent4);}
+
+.timer{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;color:var(--accent);font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:1px;}
+
+/* INPUTS */
+input,select{width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Space Mono',monospace;font-size:11px;margin-bottom:10px;transition:border 0.2s;}
+input:focus{outline:none;border-color:var(--accent);}
+label{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;}
+
+/* MINES */
+.mines-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:14px;}
+.mine-cell{aspect-ratio:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s;}
+.mine-cell:hover{border-color:var(--accent);background:rgba(0,217,255,0.1);transform:scale(1.05);}
+.mine-cell.revealed{background:rgba(79,255,176,0.1);border-color:var(--accent2);cursor:default;}
+.mine-cell.revealed:hover{transform:none;}
+
+/* CANVAS */
+canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 auto;box-shadow:var(--glow2);}
+
+/* CHESS */
+.chess-board{display:grid;grid-template-columns:repeat(8,1fr);border:2px solid var(--accent);border-radius:8px;overflow:hidden;box-shadow:var(--glow);max-width:320px;margin:0 auto 12px;}
+.chess-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:19px;cursor:pointer;transition:background 0.15s;position:relative;}
+.chess-cell.light{background:#1a2a4a;}
+.chess-cell.dark{background:#0e1828;}
+.chess-cell.selected{background:rgba(0,217,255,0.35)!important;}
+.chess-cell.valid-move::after{content:'';width:32%;height:32%;background:var(--accent2);border-radius:50%;position:absolute;opacity:0.7;}
+.chess-cell:hover{background:rgba(0,217,255,0.15)!important;}
+
+/* GAME TABS */
+.game-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.game-tab{flex:1;min-width:80px;padding:9px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:#ffffff;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center;}
+.game-tab.active{background:rgba(0,217,255,0.1);border-color:var(--accent);color:var(--accent);}
+
+/* NFT GRID */
+.nft-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+.nft-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:all 0.2s;}
+.nft-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--glow2);}
+.nft-card-img{width:100%;aspect-ratio:1;object-fit:cover;}
+.nft-card-info{padding:8px;}
+.nft-card-name{font-size:10px;font-weight:700;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nft-card-sub{font-size:9px;color:var(--muted);}
+
+/* LEADERBOARD */
+.lb-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:8px;margin-bottom:7px;border:1px solid var(--border);}
+.lb-rank{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:var(--muted);min-width:22px;}
+.lb-rank.r1{color:var(--accent4);}
+.lb-rank.r2{color:#aaa;}
+.lb-rank.r3{color:#cd7f32;}
+
+/* TX LOG */
+.tx-list{font-size:10px;}
+.tx-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.tx-item:last-child{border-bottom:none;}
+.tx-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.b-gm{background:rgba(0,217,255,0.15);color:var(--accent);}
+.b-mine{background:rgba(79,255,176,0.15);color:var(--accent2);}
+.b-nft{background:rgba(255,215,0,0.15);color:var(--accent4);}
+.b-deploy{background:rgba(167,139,250,0.15);color:#a78bfa;}
+.b-game{background:rgba(255,107,107,0.15);color:var(--accent3);}
+.b-migration{background:rgba(255,215,0,0.2);color:var(--accent4);}
+
+/* QUEST */
+.quest-progress{background:var(--surface2);border-radius:6px;height:7px;overflow:hidden;margin:7px 0;}
+.quest-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:6px;transition:width 0.4s;}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:11px 15px;font-size:11px;z-index:1000;display:none;max-width:260px;box-shadow:var(--glow2);}
+.toast.show{display:block;animation:toastIn 0.3s ease;}
+@keyframes toastIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.spinner{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,0.2);border-top-color:currentColor;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.float{animation:float 3s ease-in-out infinite;}
+
+@media(max-width:600px){
+  header{padding:0 10px;}
+  main{margin-top:140px;padding:10px;}
+  h1{font-size:18px;}
+  .logo{font-size:13px;}
+  .chess-board{max-width:256px;}
+  .chess-cell{font-size:15px;}
+}
+</style>
+</head>
+<body>
+
+<div class="testnet-banner">*** TESTNET ONLY - No real money involved ***</div>
+
+<header>
+  <div class="logo">Rurou<span>niYu</span> V2</div>
+  <div class="header-right">
+    <button class="faucet-btn" onclick="openFaucet()">Faucet</button>
+    <select class="chain-select" id="chainSelect" onchange="switchChain()">
+      <option value="robinhood">Robinhood</option>
+      <option value="arc">ARC</option>
+      <option value="giwa">GIWA</option>
+      <option value="ink">INK Sepolia</option>
+    </select>
+    <button class="wallet-btn" id="walletBtn" onclick="toggleWallet()">Connect</button>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showPage('home',this)">Home</button>
+  <button class="nav-btn" onclick="showPage('migrate',this)">Migrate</button>
+  <button class="nav-btn" onclick="showPage('gm',this)">GM</button>
+  <button class="nav-btn" onclick="showPage('mines',this)">Mines</button>
+  <button class="nav-btn" onclick="showPage('games',this)">Games</button>
+  <button class="nav-btn" onclick="showPage('nft',this)">NFT</button>
+  <button class="nav-btn" onclick="showPage('create',this)">Create</button>
+  <button class="nav-btn" onclick="showPage('deploy',this)">Deploy</button>
+  <button class="nav-btn" onclick="showPage('leaderboard',this)">Leaders</button>
+  <button class="nav-btn" onclick="showPage('profile',this)">Profile</button>
+</nav>
+
+<main>
+
+<!-- HOME -->
+<div class="page active" id="home">
+  <h1>RUROU<span style="color:var(--accent4)">NIYU</span> HUB</h1>
+  <p class="subtitle">V2 &mdash; <span id="homeChain" style="color:var(--accent)">Robinhood Testnet</span></p>
+  <div class="card" style="text-align:center;padding:24px 18px;">
+    <div style="font-size:48px;margin-bottom:8px;" class="float">&#127918;</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:var(--muted);margin-bottom:16px;letter-spacing:2px;">YOUR DASHBOARD</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Total TX</div><div class="stat-value" id="homeTx">0</div></div>
+      <div class="stat"><div class="stat-label">GM Streak</div><div class="stat-value" id="homeStreak">0</div></div>
+      <div class="stat"><div class="stat-label">Mines</div><div class="stat-value" id="homeMines">0</div></div>
+      <div class="stat"><div class="stat-label">NFTs</div><div class="stat-value" id="homeNfts">0</div></div>
+      <div class="stat"><div class="stat-label">Game Score</div><div class="stat-value" id="homeGame">0</div></div>
+      <div class="stat"><div class="stat-label">Deploys</div><div class="stat-value" id="homeDeploys">0</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>DAILY QUEST</h2>
+    <div style="text-align:center;padding:8px 0;">
+      <div style="font-size:32px;margin-bottom:6px;" id="questEmoji">&#127919;</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:3px;" id="questText">Loading...</div>
+      <div style="color:var(--accent4);font-size:10px;margin-bottom:10px;" id="questReward"></div>
+      <div class="quest-progress"><div class="quest-fill" id="questBar" style="width:0%"></div></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:5px;" id="questProgressText">0 / 0</div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>QUICK ACTIONS</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">
+      <button class="btn" onclick="showPage('gm',null)" style="width:100%">Say GM</button>
+      <button class="btn btn-outline" onclick="showPage('games',null)" style="width:100%">Play Games</button>
+      <button class="btn btn-outline" onclick="showPage('nft',null)" style="width:100%">Mint NFT</button>
+      <button class="btn btn-outline" onclick="showPage('create',null)" style="width:100%">Create NFT</button>
+    </div>
+  </div>
+</div>
+
+<!-- MIGRATE -->
+<div class="page" id="migrate">
+  <h1>V1 MIGRATION</h1>
+  <p class="subtitle">Your old stats are read automatically from the V1 contract</p>
+  <div class="card" style="border-color:var(--accent4);">
+    <h2 style="color:var(--accent4)">AUTO-MIGRATION</h2>
+    <p style="color:var(--muted);font-size:11px;margin-bottom:12px;line-height:1.8;">Connect wallet and click "Read V1 Data". The app reads your old stats automatically &mdash; no manual entry needed. Then click "Migrate to V2" to transfer everything in one transaction.</p>
+    <div class="alert alert-gold">Early Adopter bonus: Migration itself counts as a TX!</div>
+    <div id="v1StatsDisplay" style="display:none;margin-bottom:12px;">
+      <div class="alert alert-info" id="v1StatsText"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-outline" id="loadV1Btn" onclick="loadV1Stats()" style="flex:1;">Read V1 Data</button>
+      <button class="btn btn-gold" id="migrateBtn" onclick="doMigration()" style="flex:1;" disabled>Migrate to V2</button>
+    </div>
+    <div id="migrateAlert" style="margin-top:10px;"></div>
+  </div>
+  <div class="card">
+    <h2>V1 CONTRACT ADDRESSES</h2>
+    <div style="font-size:10px;color:var(--muted);line-height:2.4;">
+      <div>Robinhood: <span style="color:var(--accent);word-break:break-all;">0x9165Fa5dA6d0468b43A0b37E160b8BA2D8A7c7d0</span></div>
+      <div>ARC: <span style="color:var(--accent);word-break:break-all;">0x50718E9194595540fF7Ef81EC31AaC15a7Ae4ac8</span></div>
+      <div>GIWA: <span style="color:var(--accent);word-break:break-all;">0x31e68F7b2e1cC623EaFe10493A1db16C330aCfAD</span></div>
+      <div>INK: <span style="color:var(--accent);word-break:break-all;">0x2Ab6E0364593C59018C49130602B4fBBEE77eEBd</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- GM -->
+<div class="page" id="gm">
+  <h1>DAILY GM</h1>
+  <p class="subtitle">Build your streak &mdash; resets at 00:00 UTC+3</p>
+  <div class="card">
+    <div class="timer" id="gmTimer">Connect wallet to start</div>
+    <div style="text-align:center;padding:20px 0;">
+      <div style="font-size:60px;margin-bottom:8px;" class="float">&#128293;</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:44px;font-weight:900;color:var(--accent);margin-bottom:5px;" id="gmStreakBig">0</div>
+      <div style="color:var(--muted);font-size:10px;margin-bottom:18px;letter-spacing:2px;">CURRENT STREAK</div>
+      <button class="btn" id="gmBtn" onclick="gmCheckIn()" style="width:100%;padding:13px;font-size:12px;">SAY GM TODAY!</button>
+      <div id="gmAlert" style="margin-top:12px;"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>GM STATS</h2>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Total GMs</div><div class="stat-value" id="gmCount">0</div></div>
+      <div class="stat"><div class="stat-label">Streak</div><div class="stat-value" id="gmStreak">0</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MINES -->
+<div class="page" id="mines">
+  <h1>MINES</h1>
+  <p class="subtitle">Reveal mines on-chain &mdash; each = 1 TX</p>
+  <div class="card">
+    <h2>MINE GRID</h2>
+    <div class="mines-grid" id="minesGrid"></div>
+    <button class="btn btn-outline" onclick="resetMines()" style="width:100%;">Reset Grid</button>
+    <div id="minesAlert" style="margin-top:10px;"></div>
+  </div>
+  <div class="card">
+    <h2>MINE STATS</h2>
+    <div class="stat"><div class="stat-label">Mines Revealed</div><div class="stat-value" id="mineCount">0</div></div>
+  </div>
+</div>
+
+<!-- GAMES -->
+<div class="page" id="games">
+  <h1>GAME CENTER</h1>
+  <p class="subtitle">Play &mdash; then claim score on-chain for TX</p>
+  <div class="game-tabs">
+    <button class="game-tab active" id="tab-tetris" onclick="switchGame('tetris')">Tetris</button>
+    <button class="game-tab" id="tab-flappy" onclick="switchGame('flappy')">Flappy Bird</button>
+    <button class="game-tab" id="tab-chess" onclick="switchGame('chess')">Chev Chess</button>
+  </div>
+
+  <div id="game-tetris">
+    <div class="card">
+      <h2>TETRIS</h2>
+      <canvas id="tetrisCanvas" width="200" height="400" style="background:#000;"></canvas>
+      <div style="text-align:center;margin-top:10px;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--accent);margin-bottom:8px;">Score: <span id="tetrisScore">0</span></div>
+        <div style="color:var(--muted);font-size:9px;margin-bottom:8px;">Arrows/WASD = Move | SPACE = Rotate</div>
+        <button class="btn" id="tetrisBtn" onclick="startTetris()" style="width:100%;margin-bottom:7px;">PLAY TETRIS</button>
+        <button class="btn btn-green" id="tetrisClaimBtn" onclick="claimScore('Tetris')" style="width:100%;display:none;">CLAIM SCORE ON-CHAIN</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-flappy" style="display:none;">
+    <div class="card">
+      <h2>FLAPPY BIRD</h2>
+      <canvas id="flappyCanvas" width="560" height="320" style="background:#000;max-width:100%;"></canvas>
+      <div style="text-align:center;margin-top:10px;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--accent);margin-bottom:8px;">Score: <span id="flappyScore">0</span></div>
+        <div style="color:var(--muted);font-size:9px;margin-bottom:8px;">SPACE or TAP = Jump | Pass pipe = +10pts</div>
+        <button class="btn" id="flappyBtn" onclick="startFlappy()" style="width:100%;margin-bottom:7px;">PLAY FLAPPY BIRD</button>
+        <button class="btn btn-green" id="flappyClaimBtn" onclick="claimScore('Flappy Bird')" style="width:100%;display:none;">CLAIM SCORE ON-CHAIN</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-chess" style="display:none;">
+    <div class="card">
+      <h2>RUROU<span style="color:var(--accent4)">NIYU</span> CHEV CHESS</h2>
+      <p style="color:var(--muted);font-size:9px;margin-bottom:10px;">Inspired by AnichessGame by Chev &#11088;</p>
+      <div style="text-align:center;margin-bottom:10px;">
+        <div style="font-family:'Orbitron',sans-serif;font-size:15px;color:var(--accent);margin-bottom:5px;">Score: <span id="chessScore">0</span> &nbsp;|&nbsp; <span id="chessTurn" style="color:var(--accent4)">WHITE</span></div>
+        <div id="chessStatus" style="color:var(--accent2);font-size:11px;min-height:15px;"></div>
+      </div>
+      <div class="chess-board" id="chessBoard"></div>
+      <div style="text-align:center;margin-top:10px;">
+        <div style="color:var(--muted);font-size:9px;margin-bottom:8px;">Click piece then target | Capture = pts | Win = +100pts</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="chessStartBtn" onclick="startChess()" style="flex:1;">NEW GAME</button>
+          <button class="btn btn-green" id="chessClaimBtn" onclick="claimScore('Chev Chess')" style="flex:1;display:none;">CLAIM SCORE</button>
+        </div>
+        <div id="chessAlert" style="margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>GAME STATS</h2>
+    <div class="stat"><div class="stat-label">Total Score Claimed</div><div class="stat-value" id="totalGameStat">0</div></div>
+  </div>
+</div>
+
+<!-- NFT CHECKMATE -->
+<div class="page" id="nft">
+  <h1>$CHECKmate NFT</h1>
+  <p class="subtitle">Official ERC-721 collection &mdash; max 9999 per chain</p>
+  <div class="card">
+    <div style="max-width:260px;margin:0 auto 14px;position:relative;">
+      <div style="border-radius:16px;border:2px solid var(--accent);box-shadow:0 0 30px rgba(0,217,255,0.5),0 0 60px rgba(0,217,255,0.2);overflow:hidden;background:#0a0f1e;">
+        <img src="https://lavender-labour-jay-421.mypinata.cloud/ipfs/bafybeihit4vnydmqtyh2c3m3bmqn66i4iet7f7bdb6rlt724f5gnyjq2ni"
+          alt="$CHECKmate NFT"
+          style="width:100%;display:block;"
+          onerror="this.src='https://ipfs.io/ipfs/bafybeihit4vnydmqtyh2c3m3bmqn66i4iet7f7bdb6rlt724f5gnyjq2ni'"
+        >
+      </div>
+      <div style="position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#7c6fff,#00d9ff);padding:4px 16px;border-radius:20px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;color:#000;letter-spacing:1px;white-space:nowrap;">$CHECKmate</div>
+    </div>
+    <div style="height:16px;"></div>
+    <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:11px;text-align:center;margin-bottom:12px;font-size:11px;font-weight:700;color:var(--accent4);">
+      Available: <span id="nftAvailable">?</span> / 9999
+      <button onclick="loadContractData()" style="margin-left:8px;padding:3px 7px;background:var(--surface);border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-size:9px;">refresh</button>
+    </div>
+    <button class="btn" id="nftBtn" onclick="mintCheckmate()" style="width:100%;padding:12px;margin-bottom:10px;">MINT $CHECKmate NFT</button>
+    <div id="nftAlert"></div>
+  </div>
+  <div class="card">
+    <h2>YOUR $CHECKmate NFTs</h2>
+    <div id="myCheckmateNFTs" style="color:var(--muted);font-size:11px;text-align:center;padding:14px;">Connect wallet to see your NFTs</div>
+  </div>
+</div>
+
+<!-- CREATE NFT -->
+<div class="page" id="create">
+  <h1>CREATE YOUR NFT</h1>
+  <p class="subtitle">Mint your own custom NFT on-chain &mdash; your art, your token</p>
+  <div class="card">
+    <h2>1. CREATE COLLECTION (optional)</h2>
+    <p style="color:var(--muted);font-size:10px;margin-bottom:10px;line-height:1.7;">Create your personal collection once per wallet, then mint NFTs under it.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div><label>Collection Name</label><input type="text" id="colName" placeholder="My Collection"></div>
+      <div><label>Symbol (max 6)</label><input type="text" id="colSymbol" placeholder="MYC" maxlength="6"></div>
+    </div>
+    <button class="btn btn-outline" id="createColBtn" onclick="createCollection()" style="width:100%;">Create Collection</button>
+    <div id="colAlert" style="margin-top:8px;"></div>
+    <div id="myColDisplay" style="margin-top:10px;display:none;"></div>
+  </div>
+  <div class="card">
+    <h2>2. MINT YOUR NFT</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label>NFT Name *</label>
+        <input type="text" id="createName" placeholder="My Awesome NFT">
+        <label>Description</label>
+        <input type="text" id="createDesc" placeholder="Tell the story...">
+        <label>Image URL or IPFS *</label>
+        <input type="text" id="createImg" placeholder="https://... or ipfs://..." oninput="previewImage()">
+        <div style="font-size:9px;color:var(--muted);margin-top:-6px;margin-bottom:10px;">
+          Free IPFS: <a href="https://pinata.cloud" target="_blank" style="color:var(--accent);">pinata.cloud</a>
+        </div>
+      </div>
+      <div>
+        <label>Preview</label>
+        <div id="imgPreview" style="width:100%;aspect-ratio:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;overflow:hidden;">No image</div>
+      </div>
+    </div>
+    <button class="btn btn-green" id="createNftBtn" onclick="mintUserNFT()" style="width:100%;padding:12px;">MINT MY NFT ON-CHAIN</button>
+    <div id="createAlert" style="margin-top:10px;"></div>
+  </div>
+  <div class="card">
+    <h2>COMMUNITY NFTs</h2>
+    <div id="recentUserNFTs" class="nft-grid" style="margin-bottom:0;">
+      <div style="color:var(--muted);font-size:10px;text-align:center;padding:14px;grid-column:1/-1;">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<!-- DEPLOY -->
+<div class="page" id="deploy">
+  <h1>DEPLOY LOGGER</h1>
+  <p class="subtitle">Log your contract deployments on-chain</p>
+  <div class="card">
+    <h2>LOG DEPLOYMENT</h2>
+    <label>Contract Type</label>
+    <input type="text" id="deployType" placeholder="e.g. ERC20, NFT, DEX, Bridge">
+    <label>Contract Name</label>
+    <input type="text" id="deployName" placeholder="e.g. MyToken, MyNFT">
+    <button class="btn" id="deployBtn" onclick="logDeploy()" style="width:100%;padding:12px;">LOG DEPLOY</button>
+    <div id="deployAlert" style="margin-top:10px;"></div>
+  </div>
+  <div class="card">
+    <h2>DEPLOY STATS</h2>
+    <div class="stat"><div class="stat-label">Total Deploys</div><div class="stat-value" id="deployCount">0</div></div>
+  </div>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="page" id="leaderboard">
+  <h1>LEADERBOARD</h1>
+  <p class="subtitle">Top farmers on <span id="lbChain" style="color:var(--accent)">Robinhood Testnet</span></p>
+  <div class="card">
+    <h2>TOP TX FARMERS</h2>
+    <div id="lbList"><div style="color:var(--muted);font-size:10px;text-align:center;padding:18px;">Connect wallet to load leaderboard</div></div>
+    <button class="btn btn-outline" onclick="loadLeaderboard()" style="width:100%;margin-top:10px;">Refresh</button>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="profile">
+  <h1>PROFILE</h1>
+  <p class="subtitle" id="profileAddr" style="color:var(--accent);word-break:break-all;font-size:10px;"></p>
+  <div class="card">
+    <h2>STATS &mdash; <span id="profileChain" style="color:var(--accent4)">Robinhood</span></h2>
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Total TX</div><div class="stat-value" id="pTotal">0</div></div>
+      <div class="stat"><div class="stat-label">Streak</div><div class="stat-value" id="pStreak">0</div></div>
+      <div class="stat"><div class="stat-label">GMs</div><div class="stat-value" id="pGms">0</div></div>
+      <div class="stat"><div class="stat-label">Mines</div><div class="stat-value" id="pMines">0</div></div>
+      <div class="stat"><div class="stat-label">NFTs</div><div class="stat-value" id="pNfts">0</div></div>
+      <div class="stat"><div class="stat-label">Deploys</div><div class="stat-value" id="pDeploys">0</div></div>
+      <div class="stat"><div class="stat-label">Game</div><div class="stat-value" id="pGame">0</div></div>
+      <div class="stat"><div class="stat-label">Migrated</div><div class="stat-value" id="pMigrated" style="font-size:13px;">-</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>RECENT TRANSACTIONS</h2>
+    <div id="profileTxLog" class="tx-list">
+      <div style="color:var(--muted);font-size:10px;text-align:center;padding:14px;">Connect wallet to see transactions</div>
+    </div>
+  </div>
+</div>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== CONFIG ==========
+const CHAINS = {
+  robinhood:{
+    name:'Robinhood Testnet',chainId:'0xb626',chainIdDec:46630,
+    rpc:'https://rpc.testnet.chain.robinhood.com/rpc',
+    hubAddress:'0xDA8C0b678369898398B1419368176065A4e2D141',
+    checkmateAddress:'0xb8DD07F222809f9Ed6197c5D775068F1A15cF672',
+    factoryAddress:'0xfC2398F73A3efC1d7BBE04DAa56e6616f78C685C',
+    v1Address:'0x9165Fa5dA6d0468b43A0b37E160b8BA2D8A7c7d0',
+    faucet:'https://faucet.testnet.chain.robinhood.com/',
+    explorer:'https://explorer.testnet.chain.robinhood.com'
+  },
+  arc:{
+    name:'ARC Testnet',chainId:'0x4cef52',chainIdDec:5042002,
+    rpc:'https://rpc.testnet.arc.network',
+    hubAddress:'0xb8DD07F222809f9Ed6197c5D775068F1A15cF672',
+    checkmateAddress:'0xa37953Ae80D50d1F57a6A868c0A5430Ca6843793',
+    factoryAddress:'0x92815921ef18c755Db328189823c397611Bf4cf5',
+    v1Address:'0x50718E9194595540fF7Ef81EC31AaC15a7Ae4ac8',
+    faucet:'https://faucet.circle.com/',
+    explorer:'https://testnet.arcscan.app',
+    currencyName:'USDC',currencySymbol:'USDC'
+  },
+  giwa:{
+    name:'GIWA Sepolia',chainId:'0x164ce',chainIdDec:91342,
+    rpc:'https://sepolia-rpc.giwa.io',
+    hubAddress:'0x6DAEe80fCCeD9f8565d6BbAB5afDDDEBb9235648',
+    checkmateAddress:'0xC1d745360D25343F7Da1A609691b02e2278E9642',
+    factoryAddress:'0xf83110b42a5c34ADc6C07ccB26B811Fe2b6942E7',
+    v1Address:'0x31e68F7b2e1cC623EaFe10493A1db16C330aCfAD',
+    faucet:'https://faucet.giwa.io/#/',
+    explorer:'https://sepolia-explorer.giwa.io',
+    currencyName:'ETH',currencySymbol:'ETH'
+  },
+  ink:{
+    name:'INK Sepolia',chainId:'0xba5ed',chainIdDec:763373,
+    rpc:'https://rpc-gel-sepolia.inkonchain.com',
+    hubAddress:'0xF0031527F2ABBaEDbebF4BC56CF0E34c0a937594',
+    checkmateAddress:'0x005664963060E96f630264bEbA5D0F7241B6502E',
+    factoryAddress:'0xb6B7fAC46ADd99112774Da285745F277E0Bf6210',
+    v1Address:'0x2Ab6E0364593C59018C49130602B4fBBEE77eEBd',
+    faucet:'https://inkonchain.com/faucet',
+    explorer:'https://explorer-sepolia.inkonchain.com',
+    currencyName:'ETH',currencySymbol:'ETH'
+  }
+};
+
+const HUB_ABI=[
+  "function gmCheckIn() external",
+  "function revealMine(uint256) external",
+  "function logDeploy(string,string) external",
+  "function logGameScore(uint256,string) external",
+  "function migrateMyData(uint256,uint256,uint256,uint256,uint256,uint256) external",
+  "function getUserStats(address) external view returns (uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool)",
+  "function getRecentTxLog(uint256) external view returns (tuple(address user,string txType,string label,uint256 timestamp)[])",
+  "function isMigrationOpen() external view returns (bool)"
+];
+
+const CHECKMATE_ABI=[
+  "function mint(string) external returns (uint256)",
+  "function getRemainingSupply() external view returns (uint256)",
+  "function getTokensOfOwner(address) external view returns (uint256[])"
+];
+
+const FACTORY_ABI=[
+  "function createCollection(string,string) external",
+  "function mintNFT(string,string,string) external returns (uint256)",
+  "function getUserCollection(address) external view returns (string,string,uint256,bool)",
+  "function getRecentNFTs(uint256) external view returns (tuple(uint256 tokenId,address creator,string nftName,string description,string imageURI,uint256 mintedAt,bool exists)[])"
+];
+
+const V1_ABI=["function getUserStats(address) external view returns (uint256,uint256,uint256,uint256,uint256,uint256)"];
+
+let currentChain='robinhood';
+let provider=null,signer=null,hubContract=null,checkmateContract=null,factoryContract=null;
+let walletAddress=null,lastClaimedScore=0,v1LoadedData=null;
+
+// ========== UTILS ==========
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+function setAlert(id,type,msg){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=msg?'<div class="alert alert-'+type+'">'+msg+'</div>':'';
+}
+function getUTC3Now(){return new Date(new Date().toLocaleString('en-US',{timeZone:'Europe/Istanbul'}));}
+function secsUntilMidnight(){
+  const n=getUTC3Now(),t=new Date(n);t.setDate(t.getDate()+1);t.setHours(0,0,0,0);
+  return Math.floor((t-n)/1000);
+}
+
+// ========== QUEST ==========
+const QUESTS=[
+  {emoji:'&#128293;',text:'Say GM today',reward:'+1 TX',type:'gm',target:1},
+  {emoji:'&#9874;',text:'Reveal 3 Mines',reward:'+3 TX',type:'mine',target:3},
+  {emoji:'&#127918;',text:'Score 30+ in any game',reward:'+5 TX',type:'game',target:30},
+  {emoji:'&#127912;',text:'Mint 1 NFT',reward:'+1 TX',type:'nft',target:1},
+  {emoji:'&#128640;',text:'Log 1 Deploy',reward:'+1 TX',type:'deploy',target:1},
+  {emoji:'&#9822;',text:'Win a Chess game',reward:'+8 TX',type:'chess',target:1}
+];
+function getDailyQuest(){
+  const key='dq_'+new Date().toDateString();
+  let q=localStorage.getItem(key);
+  if(!q){q=JSON.stringify(QUESTS[Math.floor(Math.random()*QUESTS.length)]);localStorage.setItem(key,q);}
+  return JSON.parse(q);
+}
+function updateQuestDisplay(stats){
+  const q=getDailyQuest();
+  document.getElementById('questEmoji').innerHTML=q.emoji;
+  document.getElementById('questText').textContent=q.text;
+  document.getElementById('questReward').textContent=q.reward;
+  let prog=0;
+  if(stats){
+    if(q.type==='gm') prog=Math.min(Number(stats[2]),q.target);
+    if(q.type==='mine') prog=Math.min(Number(stats[0]),q.target);
+    if(q.type==='nft') prog=Math.min(Number(stats[3]),q.target);
+    if(q.type==='deploy') prog=Math.min(Number(stats[4]),q.target);
+  }
+  const pct=Math.min(100,Math.round(prog/q.target*100));
+  document.getElementById('questBar').style.width=pct+'%';
+  document.getElementById('questProgressText').textContent=prog+' / '+q.target;
+}
+
+// ========== INIT ==========
+window.addEventListener('load',function(){chessBoard=INIT.map(function(r){return r.slice();});
+  updateGMTimer();setInterval(updateGMTimer,1000);
+  initMines();renderChessBoard();
+  updateQuestDisplay(null);
+  document.getElementById('homeChain').textContent=CHAINS.robinhood.name;
+  document.getElementById('lbChain').textContent=CHAINS.robinhood.name;
+  document.getElementById('profileChain').textContent='Robinhood';
+  if(window.ethereum){
+    window.ethereum.on('chainChanged', function(newChainIdHex) {
+  var matched = Object.entries(CHAINS).find(function([key, c]) {
+    return c.chainId.toLowerCase() === newChainIdHex.toLowerCase();
+  });
+  if (!matched) return;
+  currentChain = matched[0];
+  document.getElementById('chainSelect').value = currentChain;
+  document.getElementById('homeChain').textContent = matched[1].name;
+  document.getElementById('lbChain').textContent = matched[1].name;
+  document.getElementById('profileChain').textContent = matched[1].name;
+  initMines(); updateGMTimer(); v1LoadedData = null;
+  document.getElementById('v1StatsDisplay').style.display = 'none';
+  document.getElementById('migrateBtn').disabled = true;
+  if (walletAddress) {
+    provider = new ethers.BrowserProvider(window.ethereum);
+    provider.getSigner().then(function(s) {
+      signer = s;
+      initContracts();
+      setTimeout(loadContractData, 500);
+      showToast('Switched to ' + matched[1].name);
+    });
+  }
+});
+    window.ethereum.on('accountsChanged',function(accounts){
+      if(!accounts.length){
+        walletAddress=null;signer=null;hubContract=null;checkmateContract=null;factoryContract=null;
+        var btn=document.getElementById('walletBtn');
+        btn.textContent='Connect';btn.classList.remove('connected');
+        showToast('Wallet disconnected');
+      } else {
+        walletAddress=accounts[0];
+        var btn=document.getElementById('walletBtn');
+        btn.textContent=walletAddress.slice(0,6)+'...'+walletAddress.slice(-4);
+        btn.classList.add('connected');
+      }
+    });
+  }
+  loadRecentUserNFTs();
+});
+
+// ========== NAV ==========
+function showPage(name,btn){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById(name).classList.add('active');
+  if(btn){document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');}
+  if(name==='profile'&&walletAddress){document.getElementById('profileAddr').textContent=walletAddress;loadTxLog();}
+  if(name==='leaderboard') loadLeaderboard();
+  if(name==='create'){loadRecentUserNFTs();loadMyCollection();}
+  if(name==='nft'&&walletAddress) loadMyCheckmateNFTs();
+}
+
+// ========== WALLET ==========
+function toggleWallet(){
+  if(walletAddress){
+    walletAddress=null;signer=null;hubContract=null;checkmateContract=null;factoryContract=null;
+    var btn=document.getElementById('walletBtn');
+    btn.textContent='Connect';btn.classList.remove('connected');
+    showToast('Wallet disconnected');
+  } else {
+    connectWallet();
+  }
+}
+function connectWallet(){
+  if(!window.ethereum){showToast('MetaMask or Rabby not found!');return;}
+  provider=new ethers.BrowserProvider(window.ethereum);
+  window.ethereum.request({method:'eth_requestAccounts'}).then(function(accounts){
+    if(!accounts.length) return;
+    walletAddress=accounts[0];
+    provider.getSigner().then(function(s){
+      signer=s;
+      initContracts();
+      var btn=document.getElementById('walletBtn');
+      btn.textContent=walletAddress.slice(0,6)+'...'+walletAddress.slice(-4);
+      btn.classList.add('connected');
+      showToast('Connected!');
+      loadContractData();updateGMTimer();
+    });
+  }).catch(function(e){showToast('Error: '+(e.message||'Connection failed').slice(0,60));});
+}
+function initContracts(){
+  var c=CHAINS[currentChain];
+  hubContract=new ethers.Contract(c.hubAddress,HUB_ABI,signer);
+  checkmateContract=new ethers.Contract(c.checkmateAddress,CHECKMATE_ABI,signer);
+  factoryContract=new ethers.Contract(c.factoryAddress,FACTORY_ABI,signer);
+}
+async function switchToTestnet(chainKey) {
+  try {
+    const chain = CHAINS[chainKey];
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: chain.chainId }]
+    });
+    currentChain = chainKey;
+    document.getElementById('chainSelect').value = chainKey;
+    if(walletAddress) {
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      hubContract = new ethers.Contract(CHAINS[chainKey].hubAddress, HUB_ABI, signer);
+      checkmateContract = new ethers.Contract(CHAINS[chainKey].checkmateAddress, CHECKMATE_ABI, signer);
+      factoryContract = new ethers.Contract(CHAINS[chainKey].factoryAddress, FACTORY_ABI, signer);
+      setTimeout(loadContractData, 500);
+    }
+  } catch (switchError) {
+    if (switchError.code === 4902 || switchError.code === -32603) {
+      try {
+        const chain = CHAINS[chainKey];
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: chain.chainId,
+            chainName: chain.name,
+            rpcUrls: [chain.rpc],
+            nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+            blockExplorerUrls: [chain.explorer]
+          }]
+        });
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: chain.chainId }]
+        });
+        currentChain = chainKey;
+        document.getElementById('chainSelect').value = chainKey;
+        if(walletAddress) {
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
+          hubContract = new ethers.Contract(CHAINS[chainKey].hubAddress, HUB_ABI, signer);
+          checkmateContract = new ethers.Contract(CHAINS[chainKey].checkmateAddress, CHECKMATE_ABI, signer);
+          factoryContract = new ethers.Contract(CHAINS[chainKey].factoryAddress, FACTORY_ABI, signer);
+          setTimeout(loadContractData, 500);
+        }
+        showToast('✅ ' + chain.name + ' added!');
+      } catch (addError) {
+        showToast('❌ Failed: ' + addError.message.slice(0, 50));
+        document.getElementById('chainSelect').value = currentChain;
+      }
+    } else {
+      document.getElementById('chainSelect').value = currentChain;
+    }
+  }
+}
+
+// ========== CHAIN SWITCH ==========
+async function switchChain() {
+  const sel = document.getElementById('chainSelect').value;
+  if(sel === currentChain) return;
+  await switchToTestnet(sel);
+  if(walletAddress) {
+    try {
+      const chain = CHAINS[currentChain];
+      provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      hubContract = new ethers.Contract(chain.hubAddress, HUB_ABI, signer);
+      checkmateContract = new ethers.Contract(chain.checkmateAddress, CHECKMATE_ABI, signer);
+      factoryContract = new ethers.Contract(chain.factoryAddress, FACTORY_ABI, signer);
+      showToast('✅ Switched to ' + CHAINS[currentChain].name);
+      setTimeout(loadContractData, 500);
+    } catch(e) {
+      showToast('⚠️ Reconnect needed');
+    }
+  }
+  initMines(); updateGMTimer(); v1LoadedData = null;
+  document.getElementById('v1StatsDisplay').style.display = 'none';
+  document.getElementById('migrateBtn').disabled = true;
+  document.getElementById('homeChain').textContent = CHAINS[currentChain].name;
+  document.getElementById('lbChain').textContent = CHAINS[currentChain].name;
+  document.getElementById('profileChain').textContent = CHAINS[currentChain].name;
+}
+
+function openFaucet(){window.open(CHAINS[currentChain].faucet,'_blank');}
+
+// ========== LOAD DATA ==========
+function loadContractData(){
+  if(!hubContract||!walletAddress) return;
+  hubContract.getUserStats(walletAddress).then(function(s){
+    var mines=Number(s[0]),streak=Number(s[1]),gms=Number(s[2]);
+    var nfts=Number(s[3]),deploys=Number(s[4]),total=Number(s[5]);
+    var gameScore=Number(s[6]),migrated=s[7];
+    document.getElementById('homeTx').textContent=total;
+    document.getElementById('homeStreak').textContent=streak;
+    document.getElementById('homeMines').textContent=mines;
+    document.getElementById('homeNfts').textContent=nfts;
+    document.getElementById('homeGame').textContent=gameScore;
+    document.getElementById('homeDeploys').textContent=deploys;
+    document.getElementById('gmStreakBig').textContent=streak;
+    document.getElementById('gmCount').textContent=gms;
+    document.getElementById('gmStreak').textContent=streak;
+    document.getElementById('mineCount').textContent=mines;
+    document.getElementById('deployCount').textContent=deploys;
+    document.getElementById('totalGameStat').textContent=gameScore;
+    document.getElementById('pTotal').textContent=total;
+    document.getElementById('pStreak').textContent=streak;
+    document.getElementById('pGms').textContent=gms;
+    document.getElementById('pMines').textContent=mines;
+    document.getElementById('pNfts').textContent=nfts;
+    document.getElementById('pDeploys').textContent=deploys;
+    document.getElementById('pGame').textContent=gameScore;
+    document.getElementById('pMigrated').textContent=migrated?'YES':'-';
+    updateQuestDisplay(s);
+  }).catch(function(e){
+    console.error('loadData - Contract nicht verfügbar auf dieser Chain');
+    document.getElementById('homeTx').textContent='—';
+    document.getElementById('homeStreak').textContent='—';
+  });
+  checkmateContract.getRemainingSupply().then(function(r){
+    document.getElementById('nftAvailable').textContent=Number(r);
+  }).catch(function(){
+    document.getElementById('nftAvailable').textContent='—';
+  });
+}
+
+// ========== GM ==========
+function updateGMTimer(){
+  var timer=document.getElementById('gmTimer'),btn=document.getElementById('gmBtn');
+  if(!walletAddress){timer.textContent='Connect wallet to start';return;}
+  var key='lastGM_'+currentChain+'_'+walletAddress;
+  var last=localStorage.getItem(key);
+  if(!last){timer.textContent='Ready to say GM!';if(btn)btn.disabled=false;return;}
+  var sameDay=new Date(last).toDateString()===getUTC3Now().toDateString();
+  if(!sameDay){timer.textContent='Ready to say GM!';if(btn)btn.disabled=false;}
+  else{
+    var s=secsUntilMidnight();
+    timer.textContent='Next GM in: '+Math.floor(s/3600)+'h '+Math.floor((s%3600)/60)+'m '+(s%60)+'s';
+    if(btn)btn.disabled=true;
+  }
+}
+
+function gmCheckIn(){
+  if(!hubContract){showToast('Connect wallet first');return;}
+  var btn=document.getElementById('gmBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Checking in...';
+  hubContract.gmCheckIn().then(function(tx){
+    showToast('Transaction sent...');return tx.wait();
+  }).then(function(){
+    localStorage.setItem('lastGM_'+currentChain+'_'+walletAddress,new Date().toISOString());
+    showToast('GM done! Streak updated!');
+    setAlert('gmAlert','success','GM checked in! Streak growing!');
+    btn.disabled=false;btn.textContent='SAY GM TODAY!';
+    updateGMTimer();setTimeout(loadContractData,2000);
+  }).catch(function(e){
+    var msg=e.message||'';
+    setAlert('gmAlert','error',msg.includes('Already')?'Already checked in today!':'Error: '+msg.slice(0,80));
+    btn.disabled=false;btn.textContent='SAY GM TODAY!';updateGMTimer();
+  });
+}
+
+// ========== MINES ==========
+var mineGrid=[];
+function initMines(){
+  var saved=localStorage.getItem('mineGrid_'+currentChain);
+  mineGrid=saved?JSON.parse(saved):Array(25).fill(0);renderMines();
+}
+function renderMines(){
+  var g=document.getElementById('minesGrid');if(!g)return;g.innerHTML='';
+  mineGrid.forEach(function(r,i){
+    var d=document.createElement('div');
+    d.className='mine-cell'+(r?' revealed':'');
+    d.innerHTML=r?'&#9874;':'';
+    if(!r){d.onclick=(function(idx){return function(){revealMine(idx);};})(i);}
+    g.appendChild(d);
+  });
+}
+function revealMine(idx){
+  if(!hubContract){showToast('Connect wallet first');return;}
+  if(mineGrid[idx]) return;
+  hubContract.revealMine(idx).then(function(tx){showToast('Revealing...');return tx.wait();}).then(function(){
+    mineGrid[idx]=1;localStorage.setItem('mineGrid_'+currentChain,JSON.stringify(mineGrid));
+    renderMines();showToast('Mine revealed! +1 TX');setTimeout(loadContractData,2000);
+  }).catch(function(e){showToast('Error: '+(e.message||'').slice(0,60));});
+}
+function resetMines(){mineGrid=Array(25).fill(0);localStorage.setItem('mineGrid_'+currentChain,JSON.stringify(mineGrid));renderMines();showToast('Grid reset');}
+
+// ========== MINT CHECKMATE ==========
+function mintCheckmate(){
+  if(!checkmateContract){showToast('Connect wallet first');return;}
+  var btn=document.getElementById('nftBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Minting...';
+  var name='$CHECKmate #'+Math.floor(Math.random()*10000);
+  checkmateContract.mint(name).then(function(tx){showToast('Minting...');return tx.wait();}).then(function(){
+    showToast('NFT Minted: '+name);setAlert('nftAlert','success','Minted: '+name);
+    btn.disabled=false;btn.textContent='MINT $CHECKmate NFT';
+    setTimeout(function(){loadContractData();loadMyCheckmateNFTs();},3000);
+  }).catch(function(e){
+    setAlert('nftAlert','error','Error: '+(e.message||'').slice(0,80));
+    btn.disabled=false;btn.textContent='MINT $CHECKmate NFT';
+  });
+}
+function loadMyCheckmateNFTs(){
+  if(!checkmateContract||!walletAddress) return;
+  checkmateContract.getTokensOfOwner(walletAddress).then(function(tokens){
+    var cont=document.getElementById('myCheckmateNFTs');
+    if(!tokens.length){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:14px;">No $CHECKmate NFTs yet</div>';return;}
+    cont.innerHTML='<div class="nft-grid">'+tokens.slice(0,8).map(function(id){
+      return '<div class="nft-card"><div style="width:100%;aspect-ratio:1;background:linear-gradient(135deg,#1a2440,#0e1828);display:flex;align-items:center;justify-content:center;font-size:40px;">&#9822;</div><div class="nft-card-info"><div class="nft-card-name">$CHECKmate #'+Number(id)+'</div><div class="nft-card-sub">Token ID: '+Number(id)+'</div></div></div>';
+    }).join('')+'</div>';
+  }).catch(function(e){console.error(e);});
+}
+
+// ========== CREATE NFT ==========
+function createCollection(){
+  if(!factoryContract){showToast('Connect wallet first');return;}
+  var name=document.getElementById('colName').value.trim();
+  var symbol=document.getElementById('colSymbol').value.trim();
+  if(!name||!symbol){setAlert('colAlert','error','Fill in name and symbol');return;}
+  var btn=document.getElementById('createColBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Creating...';
+  factoryContract.createCollection(name,symbol).then(function(tx){showToast('Creating...');return tx.wait();}).then(function(){
+    showToast('Collection created!');setAlert('colAlert','success','Collection "'+name+'" created!');
+    btn.disabled=false;btn.textContent='Create Collection';loadMyCollection();
+  }).catch(function(e){
+    var msg=e.message||'';
+    setAlert('colAlert','error',msg.includes('already')?'You already have a collection!':'Error: '+msg.slice(0,80));
+    btn.disabled=false;btn.textContent='Create Collection';
+  });
+}
+function loadMyCollection(){
+  if(!factoryContract||!walletAddress) return;
+  factoryContract.getUserCollection(walletAddress).then(function(col){
+    var disp=document.getElementById('myColDisplay');
+    if(col[3]){disp.style.display='block';disp.innerHTML='<div class="alert alert-info">Your collection: <strong>'+col[0]+'</strong> ('+col[1]+') &mdash; '+Number(col[2])+' NFTs minted</div>';}
+  }).catch(function(){});
+}
+function previewImage(){
+  var url=document.getElementById('createImg').value.trim();
+  var prev=document.getElementById('imgPreview');
+  if(!url){prev.innerHTML='No image';return;}
+  var src=url.startsWith('ipfs://')?'https://ipfs.io/ipfs/'+url.replace('ipfs://',''):url;
+  prev.innerHTML='<img src="'+src+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" onerror="this.parentElement.innerHTML=\'Invalid URL\'">';
+}
+function mintUserNFT(){
+  if(!factoryContract){showToast('Connect wallet first');return;}
+  var name=document.getElementById('createName').value.trim();
+  var desc=document.getElementById('createDesc').value.trim();
+  var img=document.getElementById('createImg').value.trim();
+  if(!name){setAlert('createAlert','error','NFT name required');return;}
+  if(!img){setAlert('createAlert','error','Image URL or IPFS required');return;}
+  var btn=document.getElementById('createNftBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Minting...';
+  factoryContract.mintNFT(name,desc||'Created on RurouniYu Hub',img).then(function(tx){showToast('Minting...');return tx.wait();}).then(function(){
+    showToast('Your NFT is minted!');setAlert('createAlert','success','NFT "'+name+'" minted on-chain!');
+    document.getElementById('createName').value='';document.getElementById('createDesc').value='';
+    document.getElementById('createImg').value='';document.getElementById('imgPreview').innerHTML='No image';
+    btn.disabled=false;btn.textContent='MINT MY NFT ON-CHAIN';
+    setTimeout(loadRecentUserNFTs,3000);
+  }).catch(function(e){
+    setAlert('createAlert','error','Error: '+(e.message||'').slice(0,80));
+    btn.disabled=false;btn.textContent='MINT MY NFT ON-CHAIN';
+  });
+}
+function loadRecentUserNFTs(){
+  var cont=document.getElementById('recentUserNFTs');if(!cont) return;
+  var rpc=new ethers.JsonRpcProvider(CHAINS[currentChain].rpc);
+  var rc=new ethers.Contract(CHAINS[currentChain].factoryAddress,FACTORY_ABI,rpc);
+  rc.getRecentNFTs(6).then(function(nfts){
+    if(!nfts.length){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:14px;grid-column:1/-1;">No community NFTs yet. Be the first!</div>';return;}
+    cont.innerHTML=nfts.map(function(n){
+      var src=n.imageURI.startsWith('ipfs://')?'https://ipfs.io/ipfs/'+n.imageURI.replace('ipfs://',''):n.imageURI;
+      return '<div class="nft-card"><img src="'+src+'" class="nft-card-img" onerror="this.style.display=\'none\'"><div class="nft-card-info"><div class="nft-card-name">'+(n.nftName||'Unnamed')+'</div><div class="nft-card-sub">'+n.creator.slice(0,6)+'...'+n.creator.slice(-4)+'</div></div></div>';
+    }).join('');
+  }).catch(function(){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:14px;grid-column:1/-1;">Load failed</div>';});
+}
+
+// ========== DEPLOY ==========
+function logDeploy(){
+  if(!hubContract){showToast('Connect wallet first');return;}
+  var type=document.getElementById('deployType').value.trim();
+  var name=document.getElementById('deployName').value.trim();
+  if(!type||!name){showToast('Fill in all fields');return;}
+  var btn=document.getElementById('deployBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Logging...';
+  hubContract.logDeploy(type,name).then(function(tx){showToast('Logging...');return tx.wait();}).then(function(){
+    showToast('Deploy logged!');setAlert('deployAlert','success','Deploy logged: '+type+' - '+name);
+    document.getElementById('deployType').value='';document.getElementById('deployName').value='';
+    btn.disabled=false;btn.textContent='LOG DEPLOY';setTimeout(loadContractData,2000);
+  }).catch(function(e){
+    setAlert('deployAlert','error','Error: '+(e.message||'').slice(0,80));
+    btn.disabled=false;btn.textContent='LOG DEPLOY';
+  });
+}
+
+// ========== MIGRATION ==========
+function loadV1Stats(){
+  if(!walletAddress){showToast('Connect wallet first');return;}
+  var btn=document.getElementById('loadV1Btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Reading...';
+  var rpc=new ethers.JsonRpcProvider(CHAINS[currentChain].rpc);
+  var v1=new ethers.Contract(CHAINS[currentChain].v1Address,V1_ABI,rpc);
+  v1.getUserStats(walletAddress).then(function(s){
+    var mines=Number(s[0]),streak=Number(s[1]),gms=Number(s[2]),nfts=Number(s[3]),deploys=Number(s[4]),total=Number(s[5]);
+    v1LoadedData={mines:mines,streak:streak,gms:gms,nfts:nfts,deploys:deploys,total:total};
+    var disp=document.getElementById('v1StatsDisplay');disp.style.display='block';
+    document.getElementById('v1StatsText').innerHTML='V1 Data Found: GMs: <strong>'+gms+'</strong> | Streak: <strong>'+streak+'</strong> | NFTs: <strong>'+nfts+'</strong> | Mines: <strong>'+mines+'</strong> | Deploys: <strong>'+deploys+'</strong> | Total TX: <strong>'+total+'</strong>';
+    if(total>0) document.getElementById('migrateBtn').disabled=false;
+    else setAlert('migrateAlert','info','No V1 data found on this chain for your wallet.');
+    btn.disabled=false;btn.textContent='Read V1 Data';
+  }).catch(function(e){
+    setAlert('migrateAlert','error','Could not read V1: '+(e.message||'').slice(0,80));
+    btn.disabled=false;btn.textContent='Read V1 Data';
+  });
+}
+
+function doMigration(){
+  if(!hubContract||!v1LoadedData){showToast('Read V1 data first');return;}
+  var btn=document.getElementById('migrateBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Migrating...';
+  hubContract.migrateMyData(v1LoadedData.gms,v1LoadedData.streak,v1LoadedData.nfts,v1LoadedData.mines,v1LoadedData.deploys,0).then(function(tx){
+    showToast('Migrating...');return tx.wait();
+  }).then(function(){
+    showToast('Migration done!');setAlert('migrateAlert','success','Your V1 data has been migrated to V2! Welcome back!');
+    btn.textContent='Migrated!';setTimeout(loadContractData,2000);
+  }).catch(function(e){
+    var msg=e.message||'';
+    setAlert('migrateAlert','error',msg.includes('Already')?'Already migrated on this chain!':'Error: '+msg.slice(0,80));
+    btn.disabled=false;btn.textContent='Migrate to V2';
+  });
+}
+
+// ========== CLAIM SCORE ==========
+function claimScore(gameType){
+  if(!hubContract){showToast('Connect wallet first');return;}
+  if(lastClaimedScore<=0){showToast('Play first!');return;}
+  var ids={Tetris:'tetrisClaimBtn','Flappy Bird':'flappyClaimBtn','Chev Chess':'chessClaimBtn'};
+  var btn=document.getElementById(ids[gameType]);
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Claiming...';
+  hubContract.logGameScore(lastClaimedScore,gameType).then(function(tx){showToast('Claiming...');return tx.wait();}).then(function(){
+    showToast('Score claimed! +'+lastClaimedScore+' pts!');btn.style.display='none';lastClaimedScore=0;
+    setTimeout(loadContractData,2000);
+  }).catch(function(e){showToast('Error: '+(e.message||'').slice(0,60));btn.disabled=false;btn.textContent='CLAIM SCORE';});
+}
+
+// ========== TX LOG ==========
+function loadTxLog(){
+  if(!hubContract) return;
+  hubContract.getRecentTxLog(20).then(function(txs){
+    var cont=document.getElementById('profileTxLog');
+    if(!txs.length){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:14px;">No transactions yet</div>';return;}
+    cont.innerHTML=txs.filter(function(tx){
+  return tx.user.toLowerCase()===walletAddress.toLowerCase();
+}).map(function(tx){
+      var t=new Date(Number(tx.timestamp)*1000).toLocaleString();
+      return '<div class="tx-item"><div style="display:flex;align-items:center;gap:7px;"><span class="tx-badge b-'+tx.txType+'">'+tx.txType+'</span><span>'+tx.label+'</span></div><div style="font-size:9px;color:var(--muted);">'+t+'</div></div>';
+    }).join('');
+  }).catch(function(e){console.error(e);});
+}
+
+// ========== LEADERBOARD ==========
+function loadLeaderboard(){
+  var cont=document.getElementById('lbList');
+  cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:16px;">Loading...</div>';
+  var rpc=new ethers.JsonRpcProvider(CHAINS[currentChain].rpc);
+  var hub=new ethers.Contract(CHAINS[currentChain].hubAddress,HUB_ABI,rpc);
+  hub.getRecentTxLog(50).then(function(txs){
+    var seen=new Set(),addrs=[];
+    txs.forEach(function(tx){if(!seen.has(tx.user)){seen.add(tx.user);addrs.push(tx.user);}});
+    if(!addrs.length){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:16px;">No activity yet</div>';return;}
+    return Promise.all(addrs.slice(0,15).map(function(addr){
+      return hub.getUserStats(addr).then(function(s){return{addr:addr,total:Number(s[5]),streak:Number(s[1])};}).catch(function(){return{addr:addr,total:0,streak:0};});
+    }));
+  }).then(function(users){
+    if(!users) return;
+    users.sort(function(a,b){return b.total-a.total;});
+    cont.innerHTML=users.slice(0,10).map(function(u,i){
+      var rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
+      var medal=i===0?'&#127947;':i===1?'&#129352;':i===2?'&#129353;':'#'+(i+1);
+      var isMe=walletAddress&&u.addr.toLowerCase()===walletAddress.toLowerCase();
+      return '<div class="lb-item" style="'+(isMe?'border-color:var(--accent2);':'')+'"><div class="lb-rank '+rc+'">'+medal+'</div><div style="flex:1;"><div style="font-size:10px;font-weight:700;color:'+(isMe?'var(--accent2)':'var(--text)')+';">'+u.addr.slice(0,8)+'...'+u.addr.slice(-6)+(isMe?' (you)':'')+'</div><div style="font-size:9px;color:var(--muted);">Streak: '+u.streak+'</div></div><div style="font-family:\'Orbitron\',sans-serif;font-size:15px;font-weight:900;color:var(--accent);">'+u.total+'</div></div>';
+    }).join('');
+  }).catch(function(){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:16px;">Could not load</div>';});
+}
+
+// ========== TETRIS ==========
+var tetrisActive=false,tetrisScore=0,tetrisGrid=[],tetrisPiece=null,tetrisTimer=null;
+var TW=10,TH=20,BS=20;
+var PIECES=[
+  {shape:[[1,1,1,1]],color:'#00d9ff'},{shape:[[1,1],[1,1]],color:'#ffd700'},
+  {shape:[[0,1,0],[1,1,1]],color:'#a78bfa'},{shape:[[1,0,0],[1,1,1]],color:'#ff6b6b'},
+  {shape:[[0,0,1],[1,1,1]],color:'#4fffb0'},{shape:[[1,1,0],[0,1,1]],color:'#ff9100'},
+  {shape:[[0,1,1],[1,1,0]],color:'#ff1744'}
+];
+function startTetris(){
+  var canvas=document.getElementById('tetrisCanvas'),ctx=canvas.getContext('2d');
+  tetrisActive=true;tetrisScore=0;
+  tetrisGrid=Array.from({length:TH},function(){return Array(TW).fill(0);});
+  var p=PIECES[Math.floor(Math.random()*PIECES.length)];
+  tetrisPiece={shape:p.shape.map(function(r){return r.slice();}),color:p.color,x:3,y:0};
+  document.getElementById('tetrisScore').textContent='0';
+  document.getElementById('tetrisBtn').style.display='none';
+  document.getElementById('tetrisClaimBtn').style.display='none';
+  if(tetrisTimer) clearTimeout(tetrisTimer);
+  tetrisLoop(ctx);
+}
+function tetrisCanMove(px,py,shape){
+  for(var r=0;r<shape.length;r++) for(var c=0;c<shape[r].length;c++){
+    if(!shape[r][c]) continue;
+    var x=px+c,y=py+r;
+    if(x<0||x>=TW||y>=TH) return false;
+    if(y>=0&&tetrisGrid[y][x]) return false;
+  }
+  return true;
+}
+function tetrisPlace(){
+  tetrisPiece.shape.forEach(function(row,r){row.forEach(function(v,c){if(v&&tetrisPiece.y+r>=0)tetrisGrid[tetrisPiece.y+r][tetrisPiece.x+c]=tetrisPiece.color;});});
+  for(var y=TH-1;y>=0;y--){
+    if(tetrisGrid[y].every(function(c){return c;})){tetrisGrid.splice(y,1);tetrisGrid.unshift(Array(TW).fill(0));tetrisScore+=10;document.getElementById('tetrisScore').textContent=tetrisScore;y++;}
+  }
+  var p=PIECES[Math.floor(Math.random()*PIECES.length)];
+  var np={shape:p.shape.map(function(r){return r.slice();}),color:p.color,x:3,y:0};
+  if(!tetrisCanMove(np.x,np.y,np.shape)){
+    tetrisActive=false;
+    document.getElementById('tetrisBtn').style.display='block';document.getElementById('tetrisBtn').textContent='PLAY AGAIN';
+    if(tetrisScore>0){lastClaimedScore=tetrisScore;document.getElementById('tetrisClaimBtn').style.display='block';}
+    return null;
+  }
+  return np;
+}
+function tetrisDraw(ctx){
+  ctx.fillStyle='#000';ctx.fillRect(0,0,200,400);
+  ctx.strokeStyle='rgba(0,217,255,0.05)';ctx.lineWidth=1;
+  for(var i=0;i<=TW;i++){ctx.beginPath();ctx.moveTo(i*BS,0);ctx.lineTo(i*BS,400);ctx.stroke();}
+  for(var j=0;j<=TH;j++){ctx.beginPath();ctx.moveTo(0,j*BS);ctx.lineTo(200,j*BS);ctx.stroke();}
+  tetrisGrid.forEach(function(row,y){row.forEach(function(color,x){if(color){ctx.fillStyle=color;ctx.fillRect(x*BS,y*BS,BS-1,BS-1);}});});
+  if(tetrisPiece){ctx.fillStyle=tetrisPiece.color;tetrisPiece.shape.forEach(function(row,r){row.forEach(function(v,c){if(v)ctx.fillRect((tetrisPiece.x+c)*BS,(tetrisPiece.y+r)*BS,BS-1,BS-1);});});}
+}
+function tetrisLoop(ctx){
+  if(!tetrisActive) return;
+  tetrisDraw(ctx);
+  if(tetrisCanMove(tetrisPiece.x,tetrisPiece.y+1,tetrisPiece.shape)) tetrisPiece.y++;
+  else{tetrisPiece=tetrisPlace();if(!tetrisPiece) return;}
+  tetrisTimer=setTimeout(function(){tetrisLoop(ctx);},480);
+}
+
+// ========== FLAPPY ==========
+var flappyActive=false,flappyScore=0,bird={},pipes=[],flappyAnim=null,clouds=[],bgOffset=0;
+
+function initClouds(W){
+  clouds=[];
+  for(var i=0;i<6;i++) clouds.push({x:Math.random()*W,y:20+Math.random()*80,w:50+Math.random()*60,speed:0.4+Math.random()*0.4});
+}
+
+function startFlappy(){
+  var canvas=document.getElementById('flappyCanvas'),ctx=canvas.getContext('2d');
+  flappyActive=true;flappyScore=0;bgOffset=0;
+  bird={x:80,y:canvas.height/2,w:28,h:24,vy:0,frame:0,flapTimer:0};
+  pipes=[];initClouds(canvas.width);
+  document.getElementById('flappyScore').textContent='0';
+  document.getElementById('flappyBtn').style.display='none';
+  document.getElementById('flappyClaimBtn').style.display='none';
+  if(flappyAnim) cancelAnimationFrame(flappyAnim);
+  flappyLoop(ctx,canvas);
+}
+
+function drawNatureBg(ctx,W,H){
+  // Sky gradient
+  var sky=ctx.createLinearGradient(0,0,0,H*0.75);
+  sky.addColorStop(0,'#87CEEB');sky.addColorStop(0.5,'#b0e0f5');sky.addColorStop(1,'#d4f1c0');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  // Sun
+  ctx.fillStyle='rgba(255,230,80,0.9)';
+  ctx.beginPath();ctx.arc(W-60,45,28,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,240,120,0.4)';
+  ctx.beginPath();ctx.arc(W-60,45,40,0,Math.PI*2);ctx.fill();
+  // Clouds
+  ctx.fillStyle='rgba(255,255,255,0.88)';
+  clouds.forEach(function(cl){
+    cl.x-=cl.speed;if(cl.x+cl.w<0) cl.x=W+10;
+    ctx.beginPath();
+    ctx.ellipse(cl.x,cl.y,cl.w/2,14,0,0,Math.PI*2);
+    ctx.ellipse(cl.x-cl.w*0.2,cl.y+4,cl.w*0.32,11,0,0,Math.PI*2);
+    ctx.ellipse(cl.x+cl.w*0.2,cl.y+4,cl.w*0.32,11,0,0,Math.PI*2);
+    ctx.fill();
+  });
+  // Rolling hills
+  var h1=ctx.createLinearGradient(0,H*0.72,0,H);
+  h1.addColorStop(0,'#4caf50');h1.addColorStop(1,'#2d7a30');
+  ctx.fillStyle=h1;ctx.beginPath();ctx.moveTo(0,H);
+  for(var x=0;x<=W;x+=8){ctx.lineTo(x,H*0.78+Math.sin((x+bgOffset)*0.02)*18+Math.sin((x+bgOffset)*0.04)*8);}
+  ctx.lineTo(W,H);ctx.closePath();ctx.fill();
+  // Foreground grass strip
+  ctx.fillStyle='#388e3c';ctx.fillRect(0,H-18,W,18);
+  // Small flowers on ground
+  ['#ff6b6b','#ffd700','#ff9100','#ff6b6b'].forEach(function(col,i){
+    var fx=((bgOffset*1.5)%(W/4))+i*(W/4);
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(fx%W,H-18,3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(fx%W,H-18,1.5,0,Math.PI*2);ctx.fill();
+  });
+  bgOffset+=2;
+}
+
+function drawBird(ctx,bx,by,vy){
+  ctx.save();ctx.translate(bx+14,by+12);
+  var tilt=Math.max(-0.4,Math.min(0.5,vy*0.06));
+  ctx.rotate(tilt);
+  // Body
+  ctx.fillStyle='#ffd700';
+  ctx.beginPath();ctx.ellipse(0,0,14,10,0,0,Math.PI*2);ctx.fill();
+  // Wing (flap based on vy)
+  ctx.fillStyle='#ff9100';
+  ctx.beginPath();
+  var wingY=vy<-2?-8:vy>2?4:0;
+  ctx.ellipse(-4,wingY,10,5,vy<0?-0.4:0.3,0,Math.PI*2);ctx.fill();
+  // Eye
+  ctx.fillStyle='#1a0a00';ctx.beginPath();ctx.arc(8,-2,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(9,-3,1.2,0,Math.PI*2);ctx.fill();
+  // Beak
+  ctx.fillStyle='#ff6b00';
+  ctx.beginPath();ctx.moveTo(13,-1);ctx.lineTo(20,1);ctx.lineTo(13,3);ctx.closePath();ctx.fill();
+  // Red cheek
+  ctx.fillStyle='rgba(255,80,80,0.5)';ctx.beginPath();ctx.arc(5,3,4,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function drawPipe(ctx,px,gapY,gap,H){
+  // Pipe body - green gradient
+  var pg=ctx.createLinearGradient(px,0,px+44,0);
+  pg.addColorStop(0,'#2e7d32');pg.addColorStop(0.4,'#66bb6a');pg.addColorStop(1,'#1b5e20');
+  ctx.fillStyle=pg;
+  // Top pipe
+  ctx.fillRect(px,0,44,gapY-10);
+  // Top pipe cap
+  ctx.fillRect(px-5,gapY-22,54,14);ctx.fillRect(px-5,gapY-22,54,4);
+  // Bottom pipe
+  ctx.fillRect(px,gapY+gap+10,44,H-(gapY+gap+10));
+  // Bottom pipe cap
+  ctx.fillRect(px-5,gapY+gap+10,54,14);
+  // Shine
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.fillRect(px+6,0,8,gapY-10);
+  ctx.fillRect(px+6,gapY+gap+10,8,H-(gapY+gap+10));
+}
+
+function flappyLoop(ctx,canvas){
+  if(!flappyActive) return;
+  var W=canvas.width,H=canvas.height;
+  drawNatureBg(ctx,W,H);
+  bird.vy+=0.42;bird.y+=bird.vy;
+
+  // Spawn pipes - wider gap for bigger canvas
+  if(!pipes.length||pipes[pipes.length-1].x<W-200){
+    var gap=110,gapY=50+Math.random()*(H-gap-100);
+    pipes.push({x:W,gapY:gapY,gap:gap,scored:false});
+  }
+
+  // Draw & update pipes
+  for(var i=pipes.length-1;i>=0;i--){
+    var p=pipes[i];p.x-=3;
+    drawPipe(ctx,p.x,p.gapY,p.gap,H);
+    if(!p.scored&&bird.x>p.x+44){flappyScore+=10;p.scored=true;document.getElementById('flappyScore').textContent=flappyScore;}
+    // Collision with pipe (using hitbox slightly smaller than visual)
+    var bLeft=bird.x+6,bRight=bird.x+bird.w-4,bTop=bird.y+4,bBottom=bird.y+bird.h-4;
+    var pLeft=p.x-2,pRight=p.x+46;
+    if(bRight>pLeft&&bLeft<pRight){
+      if(bTop<p.gapY-8||bBottom>p.gapY+p.gap+8){endFlappy();return;}
+    }
+    if(p.x<-60) pipes.splice(i,1);
+  }
+
+  // Ground & ceiling collision
+  if(bird.y+bird.h>H-16||bird.y<0){endFlappy();return;}
+
+  // Draw bird on top
+  drawBird(ctx,bird.x,bird.y,bird.vy);
+
+  // Score display on canvas
+  ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.roundRect(W/2-35,10,70,26,8);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold 14px Orbitron,monospace';ctx.textAlign='center';
+  ctx.fillText(flappyScore,W/2,28);ctx.textAlign='left';
+
+  flappyAnim=requestAnimationFrame(function(){flappyLoop(ctx,canvas);});
+}
+
+function endFlappy(){
+  flappyActive=false;lastClaimedScore=flappyScore;
+  document.getElementById('flappyBtn').style.display='block';document.getElementById('flappyBtn').textContent='PLAY AGAIN';
+  if(flappyScore>0) document.getElementById('flappyClaimBtn').style.display='block';
+}
+
+// ========== CHESS ==========
+var chessBoard=[],chessSelected=null,chessTurn='w',chessScore=0,chessStarted=false,chessGameOver=false;
+var INIT=[['br','bn','bb','bq','bk','bb','bn','br'],['bp','bp','bp','bp','bp','bp','bp','bp'],['','','','','','','',''],['','','','','','','',''],['','','','','','','',''],['','','','','','','',''],['wp','wp','wp','wp','wp','wp','wp','wp'],['wr','wn','wb','wq','wk','wb','wn','wr']];
+var PU={wk:'&#9812;',wq:'&#9813;',wr:'&#9814;',wb:'&#9815;',wn:'&#9816;',wp:'&#9817;',bk:'&#9818;',bq:'&#9819;',br:'&#9820;',bb:'&#9821;',bn:'&#9822;',bp:'&#9823;'};
+
+function startChess(){
+  chessBoard=INIT.map(function(r){return r.slice();});
+  chessSelected=null;chessTurn='w';chessScore=0;chessStarted=true;chessGameOver=false;
+  document.getElementById('chessScore').textContent='0';
+  document.getElementById('chessTurn').textContent='WHITE';document.getElementById('chessTurn').style.color='var(--accent)';
+  document.getElementById('chessStatus').textContent='';
+  document.getElementById('chessClaimBtn').style.display='none';
+  document.getElementById('chessStartBtn').textContent='RESTART';
+  renderChessBoard();
+}
+function renderChessBoard(){
+  var board=document.getElementById('chessBoard');if(!board) return;board.innerHTML='';
+  var vm=chessSelected?getValidMoves(chessSelected.r,chessSelected.c):[];
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+    var cell=document.createElement('div');
+    cell.className='chess-cell '+((r+c)%2===0?'light':'dark');
+    if(chessSelected&&chessSelected.r===r&&chessSelected.c===c) cell.classList.add('selected');
+    if(vm.some(function(m){return m.r===r&&m.c===c;})) cell.classList.add('valid-move');
+    var piece=chessBoard[r]?chessBoard[r][c]:"";
+    if(piece){cell.innerHTML=PU[piece]||'';if(piece[0]==='w'){
+  // Weiße Figuren — verschiedene Farben
+  var wColors={k:'#ffffff',q:'#ffd700',r:'#00d9ff',b:'#4fffb0',n:'#ff9100',p:'#cccccc'};
+  cell.style.color=wColors[piece[1]]||'#ffffff';
+} else {
+  // Schwarze Figuren — dunklere Töne
+  var bColors={k:'#ff6b6b',q:'#ff1744',r:'#ff9100',b:'#a78bfa',n:'#f472b6',p:'#888888'};
+  cell.style.color=bColors[piece[1]]||'#888888';
+}}
+    (function(rr,cc){cell.onclick=function(){handleChessClick(rr,cc);};})(r,c);
+    board.appendChild(cell);
+  }
+}
+function handleChessClick(r,c){
+  if(!chessStarted||chessGameOver) return;
+  var piece=chessBoard[r]?chessBoard[r][c]:"";
+  if(chessSelected){
+    var moves=getValidMoves(chessSelected.r,chessSelected.c);
+    var move=null;for(var i=0;i<moves.length;i++){if(moves[i].r===r&&moves[i].c===c){move=moves[i];break;}}
+    if(move){
+      var captured=chessBoard[r][c];
+      if(captured==='bk'){chessScore+=200;endChessGame('white');return;}
+      if(captured==='wk'){chessScore+=200;endChessGame('black');return;}
+      if(captured){var pts={q:90,r:50,b:30,n:30,p:10}[captured[1]]||10;chessScore+=pts;document.getElementById('chessScore').textContent=chessScore;}
+      chessBoard[r][c]=chessBoard[chessSelected.r][chessSelected.c];
+      chessBoard[chessSelected.r][chessSelected.c]='';
+      if(chessBoard[r][c]==='wp'&&r===0) chessBoard[r][c]='wq';
+      if(chessBoard[r][c]==='bp'&&r===7) chessBoard[r][c]='bq';
+      chessTurn=chessTurn==='w'?'b':'w';
+      var te=document.getElementById('chessTurn');
+      te.textContent=chessTurn==='w'?'WHITE':'BLACK';te.style.color=chessTurn==='w'?'var(--accent)':'var(--accent3)';
+      chessSelected=null;renderChessBoard();
+      if(chessTurn==='b'&&!chessGameOver) setTimeout(chessAI,600);
+    } else if(piece&&piece[0]===chessTurn){chessSelected={r:r,c:c};renderChessBoard();}
+    else{chessSelected=null;renderChessBoard();}
+  } else {
+    if(piece&&piece[0]===chessTurn){chessSelected={r:r,c:c};renderChessBoard();}
+  }
+}
+function getValidMoves(r,c){
+  var piece=chessBoard[r]?chessBoard[r][c]:"";if(!piece) return [];
+  var color=piece[0],type=piece[1],enemy=color==='w'?'b':'w',moves=[];
+  function add(nr,nc){
+    if(nr<0||nr>7||nc<0||nc>7) return false;
+    var t=chessBoard[nr][nc];
+    if(t&&t[0]===color) return false;
+    moves.push({r:nr,c:nc});return !t;
+  }
+  if(type==='p'){
+    var dir=color==='w'?-1:1,sr=color==='w'?6:1;
+    var front=chessBoard[r+dir]?chessBoard[r+dir][c]:null;
+    if(!front){moves.push({r:r+dir,c:c});if(r===sr&&chessBoard[r+2*dir]&&!chessBoard[r+2*dir][c])moves.push({r:r+2*dir,c:c});}
+    [c-1,c+1].forEach(function(nc){if(nc>=0&&nc<8&&chessBoard[r+dir]){var t=chessBoard[r+dir][nc];if(t&&t[0]===enemy)moves.push({r:r+dir,c:nc});}});
+  }
+  if(type==='r'||type==='q')[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){for(var i=1;i<8;i++)if(!add(r+d[0]*i,c+d[1]*i))break;});
+  if(type==='b'||type==='q')[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(function(d){for(var i=1;i<8;i++)if(!add(r+d[0]*i,c+d[1]*i))break;});
+  if(type==='n')[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(function(d){add(r+d[0],c+d[1]);});
+  if(type==='k')[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(function(d){add(r+d[0],c+d[1]);});
+  return moves;
+}
+function chessAI(){
+  if(chessGameOver||chessTurn!=='b') return;
+  var all=[];
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+    if(chessBoard[r][c]&&chessBoard[r][c][0]==='b'){
+      getValidMoves(r,c).forEach(function(m){all.push({fr:r,fc:c,tr:m.r,tc:m.c});});
+    }
+  }
+  if(!all.length){endChessGame('white');return;}
+  var captures=all.filter(function(m){return chessBoard[m.tr][m.tc]&&chessBoard[m.tr][m.tc][0]==='w';});
+  var mv=captures.length?captures[Math.floor(Math.random()*captures.length)]:all[Math.floor(Math.random()*all.length)];
+  var cap=chessBoard[mv.tr][mv.tc];
+  chessBoard[mv.tr][mv.tc]=chessBoard[mv.fr][mv.fc];chessBoard[mv.fr][mv.fc]='';
+  if(chessBoard[mv.tr][mv.tc]==='bp'&&mv.tr===7) chessBoard[mv.tr][mv.tc]='bq';
+  if(cap==='wk'){endChessGame('black');return;}
+  chessTurn='w';
+  document.getElementById('chessTurn').textContent='WHITE';document.getElementById('chessTurn').style.color='var(--accent)';
+  chessSelected=null;renderChessBoard();
+}
+function endChessGame(winner){
+  chessGameOver=true;
+  var st=document.getElementById('chessStatus');
+  if(winner==='white'){chessScore+=100;st.textContent='You win! +100 bonus pts!';st.style.color='var(--accent2)';}
+  else{st.textContent='Black wins! Try again!';st.style.color='var(--accent3)';}
+  document.getElementById('chessScore').textContent=chessScore;
+  lastClaimedScore=chessScore;
+  if(chessScore>0) document.getElementById('chessClaimBtn').style.display='inline-block';
+  document.getElementById('chessStartBtn').textContent='NEW GAME';
+}
+
+// ========== GAME SWITCH ==========
+function switchGame(type){
+  ['tetris','flappy','chess'].forEach(function(g){
+    document.getElementById('game-'+g).style.display=g===type?'block':'none';
+    document.getElementById('tab-'+g).classList.toggle('active',g===type);
+  });
+}
+
+// ========== KEYBOARD ==========
+document.addEventListener('keydown',function(e){
+  if(tetrisActive&&tetrisPiece){
+    var ctx=document.getElementById('tetrisCanvas').getContext('2d');
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){if(tetrisCanMove(tetrisPiece.x-1,tetrisPiece.y,tetrisPiece.shape))tetrisPiece.x--;tetrisDraw(ctx);e.preventDefault();}
+    else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){if(tetrisCanMove(tetrisPiece.x+1,tetrisPiece.y,tetrisPiece.shape))tetrisPiece.x++;tetrisDraw(ctx);e.preventDefault();}
+    else if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){if(tetrisCanMove(tetrisPiece.x,tetrisPiece.y+1,tetrisPiece.shape)){tetrisPiece.y++;}tetrisDraw(ctx);e.preventDefault();}
+    else if(e.key===' '){
+      var s=tetrisPiece.shape,rot=s[0].map(function(_,i){return s.map(function(r){return r[i];}).reverse();});
+      if(tetrisCanMove(tetrisPiece.x,tetrisPiece.y,rot)) tetrisPiece.shape=rot;
+      tetrisDraw(ctx);e.preventDefault();
+    }
+  }
+  if(flappyActive&&e.key===' '){bird.vy=-9;e.preventDefault();}
+});
+document.addEventListener('touchstart',function(e){if(flappyActive){bird.vy=-9;e.preventDefault();}},{passive:false});
+</script>
+</body>
+</html>
