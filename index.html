@@ -520,7 +520,7 @@ const CHAINS = {
     name:'GIWA Sepolia',chainId:'0x164ce',chainIdDec:91342,
     rpc:'https://sepolia-rpc.giwa.io',
     hubAddress:'0x6DAEe80fCCeD9f8565d6BbAB5afDDDEBb9235648',
-    checkmateAddress:'0xC1d745360D25343F7Da1A609691b02e2278E9642',
+    checkmateAddress:'0x76150a6a585a3717C5bA1A11274c0d19A3d7348c',
     factoryAddress:'0xf83110b42a5c34ADc6C07ccB26B811Fe2b6942E7',
     v1Address:'0x31e68F7b2e1cC623EaFe10493A1db16C330aCfAD',
     faucet:'https://faucet.giwa.io/#/',
@@ -698,6 +698,14 @@ function connectWallet(){
     provider.getSigner().then(function(s){
       signer=s;
       initContracts();
+      // Prüfe ob Wallet auf richtiger Chain ist
+      var expectedChainId=CHAINS[currentChain].chainId;
+      window.ethereum.request({method:'eth_chainId'}).then(function(currentChainId){
+        if(currentChainId.toLowerCase()!==expectedChainId.toLowerCase()){
+          showToast('⚠️ Wrong network! Switching...');
+          switchToTestnet(currentChain);
+        }
+      });
       var btn=document.getElementById('walletBtn');
       btn.textContent=walletAddress.slice(0,6)+'...'+walletAddress.slice(-4);
       btn.classList.add('connected');
