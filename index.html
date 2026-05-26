@@ -1334,14 +1334,17 @@ function renderChessBoard(){
     if(chessSelected&&chessSelected.r===r&&chessSelected.c===c) cell.classList.add('selected');
     if(vm.some(function(m){return m.r===r&&m.c===c;})) cell.classList.add('valid-move');
     var piece=chessBoard[r]?chessBoard[r][c]:"";
-    if(piece){cell.innerHTML=PU[piece]||'';if(piece[0]==='w'){
-  // Weiße Figuren
-  var wColors={k:'#00d9ff',q:'#00d9ff',r:'#00d9ff',b:'#00d9ff',n:'#00d9ff',p:'#ffffff'};
-  cell.style.color=wColors[piece[1]]||'#ffffff';
-} else {
-  // Schwarze Figuren
-  var bColors={k:'#ffeb3b',q:'#ffeb3b',r:'#ffeb3b',b:'#ffeb3b',n:'#ffeb3b',p:'#ff9100'};
-  cell.style.color=bColors[piece[1]]||'#ff9100';
+    if(piece){
+  cell.innerHTML=PU[piece]||'';
+  if(piece[0]==='w'){
+    // Weiße Figuren
+    var wColors={k:'#00d9ff',q:'#00d9ff',r:'#00d9ff',b:'#00d9ff',n:'#00d9ff',p:'#ffffff'};
+    cell.style.color=wColors[piece[1]]||'#ffffff';
+  } else {
+    // Schwarze Figuren
+    var bColors={k:'#ffeb3b',q:'#ffeb3b',r:'#ffeb3b',b:'#ffeb3b',n:'#ffeb3b',p:'#ff9100'};
+    cell.style.color=bColors[piece[1]]||'#ff9100';
+  }
 }
     (function(rr,cc){cell.onclick=function(){handleChessClick(rr,cc);};})(r,c);
     board.appendChild(cell);
