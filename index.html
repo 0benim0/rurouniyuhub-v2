@@ -1406,8 +1406,25 @@ function chessAI(){
     }
   }
   if(!all.length){endChessGame('white');return;}
-  var captures=all.filter(function(m){return chessBoard[m.tr][m.tc]&&chessBoard[m.tr][m.tc][0]==='w';});
-  var mv=captures.length?captures[Math.floor(Math.random()*captures.length)]:all[Math.floor(Math.random()*all.length)];
+  
+  var captures=all.filter(function(m){
+    var target=chessBoard[m.tr][m.tc];
+    if(!target||target[0]!=='w') return false;
+    var value={q:90,r:50,b:30,n:30,p:10}[target[1]]||0;
+    return value>0;
+  });
+  
+  if(captures.length){
+    captures.sort(function(a,b){
+      var va={q:90,r:50,b:30,n:30,p:10}[chessBoard[a.tr][a.tc][1]]||0;
+      var vb={q:90,r:50,b:30,n:30,p:10}[chessBoard[b.tr][b.tc][1]]||0;
+      return vb-va;
+    });
+    var mv=captures[0];
+  } else {
+    var mv=all[Math.floor(Math.random()*all.length)];
+  }
+  
   var cap=chessBoard[mv.tr][mv.tc];
   chessBoard[mv.tr][mv.tc]=chessBoard[mv.fr][mv.fc];chessBoard[mv.fr][mv.fc]='';
   if(chessBoard[mv.tr][mv.tc]==='bp'&&mv.tr===7) chessBoard[mv.tr][mv.tc]='bq';
