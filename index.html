@@ -324,13 +324,14 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
   <div id="game-flappy" style="display:none;">
     <div class="card">
       <h2>FLAPPY BIRD</h2>
-       width="560" height="320" style="background:#000;max-width:100%;"></canvas>
+      <canvas id="flappyCanvas" width="560" height="320" style="display:block;margin:0 auto;border:2px solid var(--accent);border-radius:8px;background:#000;"></canvas>
       <div style="text-align:center;margin-top:10px;">
         <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--accent);margin-bottom:8px;">Score: <span id="flappyScore">0</span></div>
         <div style="color:var(--muted);font-size:9px;margin-bottom:8px;">SPACE or TAP = Jump | Pass pipe = +10pts</div>
         <button class="btn" id="flappyBtn" onclick="startFlappy()" style="width:100%;margin-bottom:7px;">PLAY FLAPPY BIRD</button>
         <button class="btn btn-green" id="flappyClaimBtn" onclick="claimScore('Flappy Bird')" style="width:100%;display:none;">CLAIM SCORE ON-CHAIN</button>
-      <canvas id="flappyCanvas" width="560" height="320" style="display:block;margin:0 auto;border:2px solid var(--accent);border-radius:8px;background:#000;"></canvas>
+      </div>
+    </div>
   </div>
 
   <div id="game-chess" style="display:none;">
