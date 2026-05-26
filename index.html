@@ -1089,13 +1089,13 @@ function loadLeaderboard(){
     var seen=new Set(),addrs=[];
     txs.forEach(function(tx){if(!seen.has(tx.user)){seen.add(tx.user);addrs.push(tx.user);}});
     if(!addrs.length){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:16px;">No activity yet</div>';return;}
-    return Promise.all(addrs.slice(0,15).map(function(addr){
+    return Promise.all(addrs.slice(0,50).map(function(addr){
       return hub.getUserStats(addr).then(function(s){return{addr:addr,total:Number(s[5]),streak:Number(s[1])};}).catch(function(){return{addr:addr,total:0,streak:0};});
     }));
   }).then(function(users){
     if(!users) return;
     users.sort(function(a,b){return b.total-a.total;});
-    cont.innerHTML=users.slice(0,10).map(function(u,i){
+    cont.innerHTML=users.map(function(u,i){
       var rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
       var medal=i===0?'&#127947;':i===1?'&#129352;':i===2?'&#129353;':'#'+(i+1);
       var isMe=walletAddress&&u.addr.toLowerCase()===walletAddress.toLowerCase();
