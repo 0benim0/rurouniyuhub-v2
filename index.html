@@ -1099,7 +1099,7 @@ function loadLeaderboard(){
       var rc=i===0?'r1':i===1?'r2':i===2?'r3':'';
       var medal=i===0?'&#127947;':i===1?'&#129352;':i===2?'&#129353;':'#'+(i+1);
       var isMe=walletAddress&&u.addr.toLowerCase()===walletAddress.toLowerCase();
-      return '<div class="lb-item" style="'+(isMe?'border-color:var(--accent2);':'')+'"><div class="lb-rank '+rc+'">'+medal+'</div><div style="flex:1;"><div style="font-size:10px;font-weight:700;color:'+(isMe?'var(--accent2)':'var(--text)')+';">'+u.addr.slice(0,8)+'...'+u.addr.slice(-6)+(isMe?' (you)':'')+'</div><div style="font-size:9px;color:var(--muted);">Streak: '+u.streak+'</div></div><div style="font-family:\'Orbitron\',sans-serif;font-size:15px;font-weight:900;color:var(--accent);">'+u.total+'</div></div>';
+      return '<div class="lb-item" style="'+(isMe?'border-color:var(--accent2);':'')+'"><div class="lb-rank '+rc+'">'+medal+'</div><div style="flex:1;"><div style="font-size:10px;font-weight:700;color:'+(isMe?'var(--accent2)':'var(--text)')+';">'+u.addr.slice(0,8)+'...'+u.addr.slice(-6)+(isMe?' (you)':'')+'</div></div><div style="font-family:\'Orbitron\',sans-serif;font-size:15px;font-weight:900;color:var(--accent);">'+u.total+'</div></div>';
     }).join('');
   }).catch(function(){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:16px;">Could not load</div>';});
 }
