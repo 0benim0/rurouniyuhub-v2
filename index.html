@@ -324,14 +324,13 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
   <div id="game-flappy" style="display:none;">
     <div class="card">
       <h2>FLAPPY BIRD</h2>
-      <canvas id="flappyCanvas" width="560" height="320" style="background:#000;max-width:100%;"></canvas>
+       width="560" height="320" style="background:#000;max-width:100%;"></canvas>
       <div style="text-align:center;margin-top:10px;">
         <div style="font-family:'Orbitron',sans-serif;font-size:16px;color:var(--accent);margin-bottom:8px;">Score: <span id="flappyScore">0</span></div>
         <div style="color:var(--muted);font-size:9px;margin-bottom:8px;">SPACE or TAP = Jump | Pass pipe = +10pts</div>
         <button class="btn" id="flappyBtn" onclick="startFlappy()" style="width:100%;margin-bottom:7px;">PLAY FLAPPY BIRD</button>
         <button class="btn btn-green" id="flappyClaimBtn" onclick="claimScore('Flappy Bird')" style="width:100%;display:none;">CLAIM SCORE ON-CHAIN</button>
-      </div>
-    </div>
+      <canvas id="flappyCanvas" width="560" height="320" style="display:block;margin:0 auto;border:2px solid var(--accent);border-radius:8px;background:#000;"></canvas>
   </div>
 
   <div id="game-chess" style="display:none;">
@@ -1268,7 +1267,7 @@ function flappyLoop(ctx,canvas){
   if(!flappyActive) return;
   var W=canvas.width,H=canvas.height;
   drawNatureBg(ctx,W,H);
-  bird.vy+=0.42;bird.y+=bird.vy;
+  bird.vy+=0.25;bird.y+=bird.vy;
 
   // Spawn pipes - wider gap for bigger canvas
   if(!pipes.length||pipes[pipes.length-1].x<W-200){
