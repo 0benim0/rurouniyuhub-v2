@@ -1335,14 +1335,14 @@ function renderChessBoard(){
     if(vm.some(function(m){return m.r===r&&m.c===c;})) cell.classList.add('valid-move');
     var piece=chessBoard[r]?chessBoard[r][c]:"";
     if(piece){cell.innerHTML=PU[piece]||'';if(piece[0]==='w'){
-  // Weiße Figuren — verschiedene Farben
-  var wColors={k:'#ffffff',q:'#ffd700',r:'#00d9ff',b:'#4fffb0',n:'#ff9100',p:'#cccccc'};
+  // Weiße Figuren
+  var wColors={k:'#00d9ff',q:'#00d9ff',r:'#00d9ff',b:'#00d9ff',n:'#00d9ff',p:'#ffffff'};
   cell.style.color=wColors[piece[1]]||'#ffffff';
 } else {
-  // Schwarze Figuren — dunklere Töne
-  var bColors={k:'#ff6b6b',q:'#ff1744',r:'#ff9100',b:'#a78bfa',n:'#f472b6',p:'#888888'};
-  cell.style.color=bColors[piece[1]]||'#888888';
-}}
+  // Schwarze Figuren
+  var bColors={k:'#ffeb3b',q:'#ffeb3b',r:'#ffeb3b',b:'#ffeb3b',n:'#ffeb3b',p:'#ff9100'};
+  cell.style.color=bColors[piece[1]]||'#ff9100';
+}
     (function(rr,cc){cell.onclick=function(){handleChessClick(rr,cc);};})(r,c);
     board.appendChild(cell);
   }
