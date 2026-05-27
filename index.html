@@ -27,6 +27,10 @@
   0%{background-position:200% center;}
   100%{background-position:-200% center;}
 }
+@keyframes pieceGlow {
+  0%,100%{text-shadow:0 0 8px currentColor, 0 0 16px currentColor;}
+  50%{text-shadow:0 0 16px currentColor, 0 0 32px currentColor, 0 0 48px currentColor;}
+}
 #questBar {
   animation: shimmer-strong 2s ease-in-out infinite;
   background-size: 2000px 100%;
@@ -77,7 +81,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.5;}
 .card h2{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:1px;color:var(--accent);}
-.quest-box h2{background:linear-gradient(90deg,#7c6fff,#00d9ff,#4fffb0,#ff6b6b,#7c6fff);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmerText 2.5s linear infinite;}
+.quest-box h2{background:linear-gradient(90deg,#7c6fff,#00d9ff,#4fffb0,#ff6b6b,#7c6fff);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmerText 2.5s linear infinite;font-size:18px;}
 
 /* STATS */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin-bottom:14px;}
@@ -122,7 +126,7 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
 
 /* CHESS */
 .chess-board{display:grid;grid-template-columns:repeat(8,1fr);border:2px solid var(--accent);border-radius:8px;overflow:hidden;box-shadow:var(--glow);max-width:480px;margin:0 auto 12px;}
-.chess-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:background 0.15s;position:relative;}
+.chess-cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:38px;cursor:pointer;transition:background 0.15s;position:relative;}
 .chess-cell.light{background:#1a2a4a;}
 .chess-cell.dark{background:#0e1828;}
 .chess-cell.selected{background:rgba(0,217,255,0.35)!important;}
@@ -1364,12 +1368,14 @@ function renderChessBoard(){
   cell.innerHTML=PU[piece]||'';
   if(piece[0]==='w'){
     // Weiße Figuren
-    var wColors={k:'#00d9ff',q:'#00d9ff',r:'#00d9ff',b:'#00d9ff',n:'#00d9ff',p:'#ffffff'};
+    var wColors={k:'#00d9ff',q:'#00d9ff',r:'#00d9ff',b:'#00d9ff',n:'#00d9ff',p:'#00d9ff'};
     cell.style.color=wColors[piece[1]]||'#ffffff';
+    cell.style.animation='pieceGlow 2.5s ease-in-out infinite';
   } else {
     // Schwarze Figuren
-    var bColors={k:'#ffeb3b',q:'#ffeb3b',r:'#ffeb3b',b:'#ffeb3b',n:'#ffeb3b',p:'#ff9100'};
+    var bColors={k:'#ffeb3b',q:'#ffeb3b',r:'#ffeb3b',b:'#ffeb3b',n:'#ffeb3b',p:'#ffeb3b'};
     cell.style.color=bColors[piece[1]]||'#ff9100';
+    cell.style.animation='pieceGlow 2.5s ease-in-out infinite 0.5s';
   }
 }
     (function(rr,cc){cell.onclick=function(){handleChessClick(rr,cc);};})(r,c);
