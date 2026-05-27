@@ -1375,7 +1375,7 @@ function renderChessBoard(){
     // Schwarze Figuren
     var bColors={k:'#ffeb3b',q:'#ffeb3b',r:'#ffeb3b',b:'#ffeb3b',n:'#ffeb3b',p:'#ffeb3b'};
     cell.style.color=bColors[piece[1]]||'#ff9100';
-    cell.style.animation='pieceGlow 2.5s ease-in-out infinite 0.5s';
+    cell.style.animation='pieceGlow 4s ease-in-out infinite 0.5s';
   }
 }
     (function(rr,cc){cell.onclick=function(){handleChessClick(rr,cc);};})(r,c);
@@ -1438,31 +1438,77 @@ function chessAI(){
     }
   }
   if(!all.length){endChessGame('white');return;}
-  
-  var captures=all.filter(function(m){
-    var target=chessBoard[m.tr][m.tc];
-    if(!target||target[0]!=='w') return false;
-    var value={q:90,r:50,b:30,n:30,p:10}[target[1]]||0;
-    return value>0;
-  });
-  
-  if(captures.length){
-    captures.sort(function(a,b){
-      var va={q:90,r:50,b:30,n:30,p:10}[chessBoard[a.tr][a.tc][1]]||0;
-      var vb={q:90,r:50,b:30,n:30,p:10}[chessBoard[b.tr][b.tc][1]]||0;
-      return vb-va;
-    });
-    var mv=captures[0];
-  } else {
-    var mv=all[Math.floor(Math.random()*all.length)];
+
+  var VALUES={k:10000,q:900,r:500,b:300,n:300,p:100};
+  function evaluate(move){
+    var score=0;
+    var target=chessBoard[move.tr][move.tc];
+    // Capture bonus
+    if(target&&target[0]==='w') score+=VALUES[target[1]]||0;
+    // Protect own king - never move into check
+    var piece=chessBoard[move.fr][move.fc];
+    // Penalize moving king unless necessary
+    if(piece==='bk') score-=500;
+    // Penalize moving queen unless capturing something valuable
+    if(piece==='bq'&&(!target||VALUES[target[1]]<300)) score-=200;
+    // Center control bonus
+    if(move.tr>=3&&move.tr<=4&&move.tc>=3&&move.tc<=4) score+=30;
+    // Check if our piece would be captured after move
+    var tempBoard=chessBoard.map(function(row){return row.slice();});
+    tempBoard[move.tr][move.tc]=tempBoard[move.fr][move.fc];
+    tempBoard[move.fr][move.fc]='';
+    // Check if destination is attacked by white
+    for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+      if(tempBoard[r][c]&&tempBoard[r][c][0]==='w'){
+        var wMoves=getMovesOnBoard(r,c,tempBoard);
+        wMoves.forEach(function(wm){
+          if(wm.r===move.tr&&wm.c===move.tc){
+            // Our piece would be captured - penalize
+            score-=VALUES[piece[1]]||0;
+          }
+        });
+      }
+    }
+    return score;
   }
+
+  function getMovesOnBoard(r,c,board){
+    var piece=board[r]?board[r][c]:'';if(!piece) return[];
+    var color=piece[0],type=piece[1],enemy=color==='w'?'b':'w',moves=[];
+    function add(nr,nc){
+      if(nr<0||nr>7||nc<0||nc>7) return false;
+      var t=board[nr][nc];
+      if(t&&t[0]===color) return false;
+      moves.push({r:nr,c:nc});return !t;
+    }
+    if(type==='p'){
+      var dir=color==='w'?-1:1;
+      if(board[r+dir]&&!board[r+dir][c]) moves.push({r:r+dir,c:c});
+      [c-1,c+1].forEach(function(nc){if(nc>=0&&nc<8&&board[r+dir]){var t=board[r+dir][nc];if(t&&t[0]===enemy)moves.push({r:r+dir,c:nc});}});
+    }
+    if(type==='r'||type==='q')[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){for(var i=1;i<8;i++)if(!add(r+d[0]*i,c+d[1]*i))break;});
+    if(type==='b'||type==='q')[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(function(d){for(var i=1;i<8;i++)if(!add(r+d[0]*i,c+d[1]*i))break;});
+    if(type==='n')[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(function(d){add(r+d[0],c+d[1]);});
+    if(type==='k')[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(function(d){add(r+d[0],c+d[1]);});
+    return moves;
+  }
+
+  // Score all moves and pick best
+  var scored=all.map(function(m){return{move:m,score:evaluate(m)};});
+  scored.sort(function(a,b){return b.score-a.score;});
   
-  var cap=chessBoard[mv.tr][mv.tc];
-  chessBoard[mv.tr][mv.tc]=chessBoard[mv.fr][mv.fc];chessBoard[mv.fr][mv.fc]='';
-  if(chessBoard[mv.tr][mv.tc]==='bp'&&mv.tr===7) chessBoard[mv.tr][mv.tc]='bq';
+  // Pick from top 2 moves randomly for variety
+  var topMoves=scored.slice(0,2);
+  var best=topMoves[Math.floor(Math.random()*topMoves.length)].move;
+
+  var cap=chessBoard[best.tr][best.tc];
+  chessBoard[best.tr][best.tc]=chessBoard[best.fr][best.fc];
+  chessBoard[best.fr][best.fc]='';
+  if(chessBoard[best.tr][best.tc]==='bp'&&best.tr===7) chessBoard[best.tr][best.tc]='bq';
   if(cap==='wk'){endChessGame('black');return;}
   chessTurn='w';
-  document.getElementById('chessTurn').textContent='WHITE';document.getElementById('chessTurn').style.color='var(--accent)';
+  document.getElementById('chessTurn').textContent='WHITE';
+  document.getElementById('chessTurn').style.color='var(--accent)';
   chessSelected=null;renderChessBoard();
 }
 function endChessGame(winner){
