@@ -130,6 +130,7 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
 .chess-cell.light{background:#1a2a4a;}
 .chess-cell.dark{background:#0e1828;}
 .chess-cell.selected{background:rgba(0,217,255,0.35)!important;}
+.chess-cell.bot-move{background:rgba(255,165,0,0.45)!important;}
 .chess-cell.valid-move::after{content:'';width:32%;height:32%;background:var(--accent2);border-radius:50%;position:absolute;opacity:0.7;}
 .chess-cell:hover{background:rgba(0,217,255,0.15)!important;}
 
@@ -1341,7 +1342,7 @@ function endFlappy(){
 }
 
 // ========== CHESS ==========
-var chessBoard=[],chessSelected=null,chessTurn='w',chessScore=0,chessStarted=false,chessGameOver=false;
+var chessBoard=[],chessSelected=null,chessTurn='w',chessScore=0,chessStarted=false,chessGameOver=false,lastBotMove=null;
 var INIT=[['br','bn','bb','bq','bk','bb','bn','br'],['bp','bp','bp','bp','bp','bp','bp','bp'],['','','','','','','',''],['','','','','','','',''],['','','','','','','',''],['','','','','','','',''],['wp','wp','wp','wp','wp','wp','wp','wp'],['wr','wn','wb','wq','wk','wb','wn','wr']];
 var PU={wk:'&#9812;',wq:'&#9813;',wr:'&#9814;',wb:'&#9815;',wn:'&#9816;',wp:'&#9817;',bk:'&#9818;',bq:'&#9819;',br:'&#9820;',bb:'&#9821;',bn:'&#9822;',bp:'&#9823;'};
 
@@ -1363,6 +1364,7 @@ function renderChessBoard(){
     cell.className='chess-cell '+((r+c)%2===0?'light':'dark');
     if(chessSelected&&chessSelected.r===r&&chessSelected.c===c) cell.classList.add('selected');
     if(vm.some(function(m){return m.r===r&&m.c===c;})) cell.classList.add('valid-move');
+    if(lastBotMove&&(r===lastBotMove.fr&&c===lastBotMove.fc||r===lastBotMove.tr&&c===lastBotMove.tc)) cell.classList.add('bot-move');
     var piece=chessBoard[r]?chessBoard[r][c]:"";
     if(piece){
   cell.innerHTML=PU[piece]||'';
@@ -1370,12 +1372,11 @@ function renderChessBoard(){
     // Weiße Figuren
     var wColors={k:'#00d9ff',q:'#00d9ff',r:'#00d9ff',b:'#00d9ff',n:'#00d9ff',p:'#00d9ff'};
     cell.style.color=wColors[piece[1]]||'#ffffff';
-    cell.style.animation='pieceGlow 2.5s ease-in-out infinite';
+
   } else {
     // Schwarze Figuren
     var bColors={k:'#ffeb3b',q:'#ffeb3b',r:'#ffeb3b',b:'#ffeb3b',n:'#ffeb3b',p:'#ffeb3b'};
     cell.style.color=bColors[piece[1]]||'#ff9100';
-    cell.style.animation='pieceGlow 4s ease-in-out infinite 0.5s';
   }
 }
     (function(rr,cc){cell.onclick=function(){handleChessClick(rr,cc);};})(r,c);
@@ -1401,7 +1402,7 @@ function handleChessClick(r,c){
       var te=document.getElementById('chessTurn');
       te.textContent=chessTurn==='w'?'WHITE':'BLACK';te.style.color=chessTurn==='w'?'var(--accent)':'var(--accent3)';
       chessSelected=null;renderChessBoard();
-      if(chessTurn==='b'&&!chessGameOver) setTimeout(chessAI,600);
+      if(chessTurn==='b'&&!chessGameOver) setTimeout(chessAI,3000);
     } else if(piece&&piece[0]===chessTurn){chessSelected={r:r,c:c};renderChessBoard();}
     else{chessSelected=null;renderChessBoard();}
   } else {
