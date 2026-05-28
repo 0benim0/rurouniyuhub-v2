@@ -80,14 +80,14 @@ h1{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--
 /* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden;}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.5;}
-.card h2{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:1px;color:var(--accent);}
+.card h2{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:1px;color:#ffffff;}
 .quest-box h2{background:linear-gradient(90deg,#7c6fff,#00d9ff,#4fffb0,#ff6b6b,#7c6fff);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmerText 2.5s linear infinite;font-size:18px;}
 
 /* STATS */
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin-bottom:14px;}
 .stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px 10px;text-align:center;transition:all 0.2s;}
 .stat:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--glow2);}
-.stat-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.stat-label{font-size:9px;color:#ffffff;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
 .stat-value{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--accent);}
 
 /* BUTTONS */
@@ -251,12 +251,12 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
     </div>
   </div>
   <div class="card">
-    <h2>QUICK ACTIONS</h2>
+    <h2 style="-webkit-text-fill-color:#ffffff;">QUICK ACTIONS</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;">
       <button class="btn" onclick="showPage('gm',null)" style="width:100%">Say GM</button>
-      <button class="btn btn-outline" onclick="showPage('games',null)" style="width:100%">Play Games</button>
-      <button class="btn btn-outline" onclick="showPage('nft',null)" style="width:100%">Mint NFT</button>
-      <button class="btn btn-outline" onclick="showPage('create',null)" style="width:100%">Create NFT</button>
+      <button class="btn btn-outline" onclick="showPage('games',null)" style="width:100%;color:#ffffff;">Play Games</button>
+      <button class="btn btn-outline" onclick="showPage('nft',null)" style="width:100%;color:#ffffff;">Mint NFT</button>
+      <button class="btn btn-outline" onclick="showPage('create',null)" style="width:100%;color:#ffffff;">Create NFT</button>
     </div>
   </div>
 </div>
@@ -370,7 +370,10 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
       <h2>RUROU<span style="color:var(--accent4)">NIYU</span> CHEV CHESS</h2>
       <p style="color:var(--muted);font-size:9px;margin-bottom:10px;">Inspired by AnichessGame by Chev &#11088;</p>
       <div style="text-align:center;margin-bottom:10px;">
-        <div style="font-family:'Orbitron',sans-serif;font-size:15px;color:var(--accent);margin-bottom:5px;">Score: <span id="chessScore">0</span> &nbsp;|&nbsp; <span id="chessTurn" style="color:var(--accent4)">WHITE</span></div>
+        <div style="display:inline-block;padding:8px 20px;border-radius:8px;margin-bottom:5px;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;background:#ffffff;color:#000;" id="chessTurnBox">
+  <span id="chessTurn">WHITE</span>
+</div>
+<span id="chessScore" style="display:none;">0</span>
         <div id="chessStatus" style="color:var(--accent2);font-size:11px;min-height:15px;"></div>
       </div>
       <div class="chess-board" id="chessBoard"></div>
@@ -1400,7 +1403,9 @@ function handleChessClick(r,c){
       if(chessBoard[r][c]==='bp'&&r===7) chessBoard[r][c]='bq';
       chessTurn=chessTurn==='w'?'b':'w';
       var te=document.getElementById('chessTurn');
-      te.textContent=chessTurn==='w'?'WHITE':'BLACK';te.style.color=chessTurn==='w'?'var(--accent)':'var(--accent3)';
+      te.textContent=chessTurn==='w'?'WHITE':'BLACK';
+      document.getElementById('chessTurnBox').style.background=chessTurn==='w'?'#ffffff':'#000000';
+      document.getElementById('chessTurnBox').style.color=chessTurn==='w'?'#000':'#ffffff';
       chessSelected=null;renderChessBoard();
       if(chessTurn==='b'&&!chessGameOver) setTimeout(chessAI,3000);
     } else if(piece&&piece[0]===chessTurn){chessSelected={r:r,c:c};renderChessBoard();}
@@ -1509,8 +1514,10 @@ function chessAI(){
   if(cap==='wk'){endChessGame('black');return;}
   chessTurn='w';
   document.getElementById('chessTurn').textContent='WHITE';
-  document.getElementById('chessTurn').style.color='var(--accent)';
-  chessSelected=null;renderChessBoard();
+  document.getElementById('chessTurnBox').style.background='#ffffff';
+  document.getElementById('chessTurnBox').style.color='#000';
+  lastBotMove={fr:best.fr,fc:best.fc,tr:best.tr,tc:best.tc};
+chessSelected=null;renderChessBoard();
 }
 function endChessGame(winner){
   chessGameOver=true;
