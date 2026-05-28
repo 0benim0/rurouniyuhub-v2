@@ -370,7 +370,7 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
       <h2>RUROU<span style="color:var(--accent4)">NIYU</span> CHEV CHESS</h2>
       <p style="color:var(--muted);font-size:9px;margin-bottom:10px;">Inspired by AnichessGame by Chev &#11088;</p>
       <div style="text-align:center;margin-bottom:10px;">
-        <div style="display:inline-block;padding:8px 20px;border-radius:8px;margin-bottom:5px;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;background:#ffffff;color:#000;" id="chessTurnBox">
+        <div style="display:inline-block;padding:8px 20px;border-radius:8px;margin-bottom:5px;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;background:#000000;color:#ffffff;" id="chessTurnBox">
   <span id="chessTurn">WHITE</span>
 </div>
 <span id="chessScore" style="display:none;">0</span>
@@ -1353,7 +1353,9 @@ function startChess(){
   chessBoard=INIT.map(function(r){return r.slice();});
   chessSelected=null;chessTurn='w';chessScore=0;chessStarted=true;chessGameOver=false;
   document.getElementById('chessScore').textContent='0';
-  document.getElementById('chessTurn').textContent='WHITE';document.getElementById('chessTurn').style.color='var(--accent)';
+  document.getElementById('chessTurn').textContent='WHITE';
+  document.getElementById('chessTurnBox').style.background='#000000';
+  document.getElementById('chessTurnBox').style.color='#ffffff';
   document.getElementById('chessStatus').textContent='';
   document.getElementById('chessClaimBtn').style.display='none';
   document.getElementById('chessStartBtn').textContent='RESTART';
@@ -1514,8 +1516,8 @@ function chessAI(){
   if(cap==='wk'){endChessGame('black');return;}
   chessTurn='w';
   document.getElementById('chessTurn').textContent='WHITE';
-  document.getElementById('chessTurnBox').style.background='#ffffff';
-  document.getElementById('chessTurnBox').style.color='#000';
+  document.getElementById('chessTurnBox').style.background='#000000';
+  
   lastBotMove={fr:best.fr,fc:best.fc,tr:best.tr,tc:best.tc};
 chessSelected=null;renderChessBoard();
 }
