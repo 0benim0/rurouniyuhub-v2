@@ -1506,10 +1506,17 @@ function chessAI(){
   scored.sort(function(a,b){return b.score-a.score;});
   
   // Pick from top 2 moves randomly for variety
-  var topMoves=scored.slice(0,2);
-  var best=topMoves[Math.floor(Math.random()*topMoves.length)].move;
-
-  var cap=chessBoard[best.tr][best.tc];
+  var topMoves=scored.slice(0,3);
+// Vermeide letzten Bot-Zug zu wiederholen
+if(lastBotMove){
+  topMoves=topMoves.filter(function(m){
+    return !(m.move.fr===lastBotMove.tr&&m.move.fc===lastBotMove.tc&&m.move.tr===lastBotMove.fr&&m.move.tc===lastBotMove.fc);
+  });
+  if(!topMoves.length) topMoves=scored.slice(0,3);
+}
+var best=topMoves[Math.floor(Math.random()*topMoves.length)].move;
+  
+var cap=chessBoard[best.tr][best.tc];
   chessBoard[best.tr][best.tc]=chessBoard[best.fr][best.fc];
   chessBoard[best.fr][best.fc]='';
   if(chessBoard[best.tr][best.tc]==='bp'&&best.tr===7) chessBoard[best.tr][best.tc]='bq';
