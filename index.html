@@ -242,13 +242,15 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
   </div>
   <div class="card quest-box" style="border-width:2px;animation:borderGlow 3s linear infinite;">
     <h2>DAILY QUEST</h2>
-    <div style="text-align:center;padding:8px 0;">
-      <div style="font-size:32px;margin-bottom:6px;" id="questEmoji">&#127919;</div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:3px;" id="questText">Loading...</div>
-      <div style="color:var(--accent4);font-size:10px;margin-bottom:10px;" id="questReward"></div>
-      <div class="quest-progress"><div class="quest-fill" id="questBar" style="width:0%"></div></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:5px;" id="questProgressText">0 / 0</div>
-    </div>
+    <div style="display:flex;align-items:center;gap:20px;padding:10px 0;">
+  <div style="font-size:52px;min-width:60px;text-align:center;" id="questEmoji">&#127919;</div>
+  <div style="flex:1;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px;color:#ffffff;" id="questText">Loading...</div>
+    <div style="color:var(--accent4);font-size:12px;margin-bottom:10px;" id="questReward"></div>
+    <div class="quest-progress"><div class="quest-fill" id="questBar" style="width:0%"></div></div>
+    <div style="font-size:11px;color:#ffffff;margin-top:5px;" id="questProgressText">0 / 0</div>
+  </div>
+</div>
   </div>
   <div class="card">
     <h2 style="-webkit-text-fill-color:#ffffff;">QUICK ACTIONS</h2>
@@ -265,9 +267,9 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
 <div class="page" id="migrate">
   <h1>V1 MIGRATION</h1>
   <p class="subtitle">Your old stats are read automatically from the V1 contract</p>
-  <div class="card" style="border-color:var(--accent4);">
+  <div class="card" style="border-color:var(--accent4);padding:30px;">
     <h2 style="color:var(--accent4)">AUTO-MIGRATION</h2>
-    <p style="color:var(--muted);font-size:11px;margin-bottom:12px;line-height:1.8;">Connect wallet and click "Read V1 Data". The app reads your old stats automatically &mdash; no manual entry needed. Then click "Migrate to V2" to transfer everything in one transaction.</p>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:12px;line-height:1.8;">Connect wallet and click "Read V1 Data". The app reads your old stats automatically &mdash; no manual entry needed. Then click "Migrate to V2" to transfer everything in one transaction.</p>
     <div class="alert alert-gold">Early Adopter bonus: Migration itself counts as a TX!</div>
     <div id="v1StatsDisplay" style="display:none;margin-bottom:12px;">
       <div class="alert alert-info" id="v1StatsText"></div>
@@ -278,9 +280,9 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
     </div>
     <div id="migrateAlert" style="margin-top:10px;"></div>
   </div>
-  <div class="card">
+  <div class="card" style="padding:30px;">
     <h2>V1 CONTRACT ADDRESSES</h2>
-    <div style="font-size:10px;color:var(--muted);line-height:2.4;">
+    <div style="font-size:13px;color:var(--muted);line-height:2.4;">
       <div>Robinhood: <span style="color:var(--accent);word-break:break-all;">0x9165Fa5dA6d0468b43A0b37E160b8BA2D8A7c7d0</span></div>
       <div>ARC: <span style="color:var(--accent);word-break:break-all;">0x50718E9194595540fF7Ef81EC31AaC15a7Ae4ac8</span></div>
       <div>GIWA: <span style="color:var(--accent);word-break:break-all;">0x31e68F7b2e1cC623EaFe10493A1db16C330aCfAD</span></div>
@@ -1439,84 +1441,9 @@ function getValidMoves(r,c){
 }
 function chessAI(){
   if(chessGameOver||chessTurn!=='b') return;
-  var all=[];
-  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
-    if(chessBoard[r][c]&&chessBoard[r][c][0]==='b'){
-      getValidMoves(r,c).forEach(function(m){all.push({fr:r,fc:c,tr:m.r,tc:m.c});});
-    }
-  }
-  if(!all.length){endChessGame('white');return;}
-
-  var VALUES={k:10000,q:900,r:500,b:300,n:300,p:100};
-  function evaluate(move){
-    var score=0;
-    var target=chessBoard[move.tr][move.tc];
-    // Capture bonus
-    if(target&&target[0]==='w') score+=VALUES[target[1]]||0;
-    // Protect own king - never move into check
-    var piece=chessBoard[move.fr][move.fc];
-    // Penalize moving king unless necessary
-    if(piece==='bk') score-=500;
-    // Penalize moving queen unless capturing something valuable
-    if(piece==='bq'&&(!target||VALUES[target[1]]<300)) score-=200;
-    // Center control bonus
-    if(move.tr>=3&&move.tr<=4&&move.tc>=3&&move.tc<=4) score+=30;
-    // Check if our piece would be captured after move
-    var tempBoard=chessBoard.map(function(row){return row.slice();});
-    tempBoard[move.tr][move.tc]=tempBoard[move.fr][move.fc];
-    tempBoard[move.fr][move.fc]='';
-    // Check if destination is attacked by white
-    for(var r=0;r<8;r++) for(var c=0;c<8;c++){
-      if(tempBoard[r][c]&&tempBoard[r][c][0]==='w'){
-        var wMoves=getMovesOnBoard(r,c,tempBoard);
-        wMoves.forEach(function(wm){
-          if(wm.r===move.tr&&wm.c===move.tc){
-            // Our piece would be captured - penalize
-            score-=VALUES[piece[1]]||0;
-          }
-        });
-      }
-    }
-    return score;
-  }
-
-  function getMovesOnBoard(r,c,board){
-    var piece=board[r]?board[r][c]:'';if(!piece) return[];
-    var color=piece[0],type=piece[1],enemy=color==='w'?'b':'w',moves=[];
-    function add(nr,nc){
-      if(nr<0||nr>7||nc<0||nc>7) return false;
-      var t=board[nr][nc];
-      if(t&&t[0]===color) return false;
-      moves.push({r:nr,c:nc});return !t;
-    }
-    if(type==='p'){
-      var dir=color==='w'?-1:1;
-      if(board[r+dir]&&!board[r+dir][c]) moves.push({r:r+dir,c:c});
-      [c-1,c+1].forEach(function(nc){if(nc>=0&&nc<8&&board[r+dir]){var t=board[r+dir][nc];if(t&&t[0]===enemy)moves.push({r:r+dir,c:nc});}});
-    }
-    if(type==='r'||type==='q')[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){for(var i=1;i<8;i++)if(!add(r+d[0]*i,c+d[1]*i))break;});
-    if(type==='b'||type==='q')[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(function(d){for(var i=1;i<8;i++)if(!add(r+d[0]*i,c+d[1]*i))break;});
-    if(type==='n')[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].forEach(function(d){add(r+d[0],c+d[1]);});
-    if(type==='k')[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(function(d){add(r+d[0],c+d[1]);});
-    return moves;
-  }
-
-  // Score all moves and pick best
-  var scored=all.map(function(m){return{move:m,score:evaluate(m)};});
-  scored.sort(function(a,b){return b.score-a.score;});
-  
-  // Pick from top 2 moves randomly for variety
-  var topMoves=scored.slice(0,3);
-// Vermeide letzten Bot-Zug zu wiederholen
-if(lastBotMove){
-  topMoves=topMoves.filter(function(m){
-    return !(m.move.fr===lastBotMove.tr&&m.move.fc===lastBotMove.tc&&m.move.tr===lastBotMove.fr&&m.move.tc===lastBotMove.fc);
-  });
-  if(!topMoves.length) topMoves=scored.slice(0,3);
-}
-var best=topMoves[Math.floor(Math.random()*topMoves.length)].move;
-  
-var cap=chessBoard[best.tr][best.tc];
+  var best=minimaxRoot(3);
+  if(!best){endChessGame('white');return;}
+  var cap=chessBoard[best.tr][best.tc];
   chessBoard[best.tr][best.tc]=chessBoard[best.fr][best.fc];
   chessBoard[best.fr][best.fc]='';
   if(chessBoard[best.tr][best.tc]==='bp'&&best.tr===7) chessBoard[best.tr][best.tc]='bq';
@@ -1524,9 +1451,71 @@ var cap=chessBoard[best.tr][best.tc];
   chessTurn='w';
   document.getElementById('chessTurn').textContent='WHITE';
   document.getElementById('chessTurnBox').style.background='#000000';
-  
+  document.getElementById('chessTurnBox').style.color='#ffffff';
   lastBotMove={fr:best.fr,fc:best.fc,tr:best.tr,tc:best.tc};
-chessSelected=null;renderChessBoard();
+  chessSelected=null;renderChessBoard();
+}
+
+function minimaxRoot(depth){
+  var moves=getAllMoves('b');
+  if(!moves.length) return null;
+  var bestScore=-Infinity,bestMove=null;
+  for(var i=0;i<moves.length;i++){
+    var m=moves[i];
+    var saved=chessBoard[m.tr][m.tc];
+    chessBoard[m.tr][m.tc]=chessBoard[m.fr][m.fc];
+    chessBoard[m.fr][m.fc]='';
+    var score=minimax(depth-1,false,-Infinity,Infinity);
+    chessBoard[m.fr][m.fc]=chessBoard[m.tr][m.tc];
+    chessBoard[m.tr][m.tc]=saved;
+    if(score>bestScore){bestScore=score;bestMove=m;}
+  }
+  return bestMove;
+}
+
+function minimax(depth,isMax,alpha,beta){
+  if(depth===0) return evalBoard();
+  var moves=getAllMoves(isMax?'b':'w');
+  if(!moves.length) return isMax?-10000:10000;
+  var best=isMax?-Infinity:Infinity;
+  for(var i=0;i<moves.length;i++){
+    var m=moves[i];
+    var saved=chessBoard[m.tr][m.tc];
+    chessBoard[m.tr][m.tc]=chessBoard[m.fr][m.fc];
+    chessBoard[m.fr][m.fc]='';
+    var score=minimax(depth-1,!isMax,alpha,beta);
+    chessBoard[m.fr][m.fc]=chessBoard[m.tr][m.tc];
+    chessBoard[m.tr][m.tc]=saved;
+    if(isMax){best=Math.max(best,score);alpha=Math.max(alpha,score);}
+    else{best=Math.min(best,score);beta=Math.min(beta,score);}
+    if(beta<=alpha) break;
+  }
+  return best;
+}
+
+function getAllMoves(color){
+  var moves=[];
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+    if(chessBoard[r][c]&&chessBoard[r][c][0]===color){
+      getValidMoves(r,c).forEach(function(m){moves.push({fr:r,fc:c,tr:m.r,tc:m.c});});
+    }
+  }
+  return moves;
+}
+
+function evalBoard(){
+  var VALUES={k:10000,q:900,r:500,b:320,n:300,p:100};
+  var score=0;
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+    var p=chessBoard[r][c];
+    if(!p) continue;
+    var v=VALUES[p[1]]||0;
+    // Center bonus
+    var centerBonus=(3.5-Math.abs(c-3.5))+(3.5-Math.abs(r-3.5));
+    if(p[0]==='b') score+=v+centerBonus;
+    else score-=v+centerBonus;
+  }
+  return score;
 }
 function endChessGame(winner){
   chessGameOver=true;
