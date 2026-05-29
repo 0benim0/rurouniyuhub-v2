@@ -116,14 +116,14 @@ label{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;text-tra
 
 /* MINES */
 
-.mines-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-bottom:14px;}
-.mine-cell{aspect-ratio:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;transition:all 0.15s;font-family:'Orbitron',sans-serif;}
-.mine-cell:hover{border-color:var(--accent);background:rgba(0,217,255,0.1);}
-.mine-cell.revealed{background:var(--surface3);border-color:rgba(255,255,255,0.1);cursor:default;}
-.mine-cell.revealed:hover{background:var(--surface3);}
-.mine-cell.boom{background:rgba(255,50,50,0.3);border-color:#ff4444;animation:explode 0.5s ease-out;}
-.mine-cell.bomb-shown{background:rgba(255,100,0,0.2);border-color:#ff6600;cursor:default;}
-@keyframes explode{0%{transform:scale(1);background:rgba(255,200,0,0.8);}30%{transform:scale(1.4);background:rgba(255,100,0,0.9);}60%{transform:scale(1.1);background:rgba(255,50,0,0.7);}100%{transform:scale(1);background:rgba(255,50,50,0.3);}}
+.mines-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-bottom:14px;}
+.mine-cell{aspect-ratio:1;background:#c0c0c0;border-top:3px solid #ffffff;border-left:3px solid #ffffff;border-bottom:3px solid #808080;border-right:3px solid #808080;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;transition:all 0.1s;font-family:'Orbitron',sans-serif;}
+.mine-cell:hover{background:#d0d0d0;}
+.mine-cell.revealed{background:#bdbdbd;border:1px solid #808080;cursor:default;}
+.mine-cell.revealed:hover{background:#bdbdbd;}
+.mine-cell.boom{background:#ff4444;border:1px solid #ff0000;animation:explode 0.5s ease-out;}
+.mine-cell.bomb-shown{background:#c0c0c0;border:1px solid #808080;cursor:default;}
+@keyframes explode{0%{transform:scale(1);background:rgba(255,200,0,0.8);}30%{transform:scale(1.4);background:rgba(255,100,0,0.9);}60%{transform:scale(1.1);background:rgba(255,50,0,0.7);}100%{transform:scale(1);background:#ff4444;}}
 
 /* CANVAS */
 canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 auto;box-shadow:var(--glow2);}
@@ -326,8 +326,8 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
   <div class="card">
     <h2>MINESWEEPER</h2>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div style="font-size:11px;color:var(--muted);">💣 5 Bombs hidden — find them all!</div>
-      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--accent);">Safe: <span id="safeCount">95</span></div>
+      <div style="font-size:11px;color:var(--muted);">💣 7 Bombs hidden — find them all!</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--accent);">Safe: <span id="safeCount">57</span></div>
     </div>
     <div class="mines-grid" id="minesGrid"></div>
     <div id="minesStatus" style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;min-height:20px;"></div>
@@ -933,23 +933,23 @@ function gmCheckIn(){
 var mineGrid=[],mineBombs=[],mineRevealed=[],mineGameOver=false,mineScore=0;
 
 function initMines(){
-  mineGrid=[];mineBombs=[];mineRevealed=Array(100).fill(false);mineGameOver=false;mineScore=0;
-  // Place 5 random bombs
-  while(mineBombs.length<5){
-    var b=Math.floor(Math.random()*100);
+  mineGrid=[];mineBombs=[];mineRevealed=Array(64).fill(false);mineGameOver=false;mineScore=0;
+  // Place 7 random bombs
+  while(mineBombs.length<7){
+    var b=Math.floor(Math.random()*64);
     if(!mineBombs.includes(b)) mineBombs.push(b);
   }
   // Calculate numbers
-  for(var i=0;i<100;i++){
+  for(var i=0;i<64;i++){
     if(mineBombs.includes(i)){mineGrid.push(-1);continue;}
-    var count=0,r=Math.floor(i/10),c=i%10;
+    var count=0,r=Math.floor(i/8),c=i%8;
     for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
       var nr=r+dr,nc=c+dc;
-      if(nr>=0&&nr<10&&nc>=0&&nc<10&&mineBombs.includes(nr*10+nc)) count++;
+      if(nr>=0&&nr<8&&nc>=0&&nc<8&&mineBombs.includes(nr*8+nc)) count++;
     }
     mineGrid.push(count);
   }
-  document.getElementById('safeCount').textContent='95';
+  document.getElementById('safeCount').textContent='57';
   document.getElementById('minesStatus').textContent='';
   document.getElementById('minesStatus').style.color='';
   document.getElementById('minesClaimBtn').style.display='none';
@@ -969,7 +969,7 @@ function renderMines(){
       d.innerHTML='💥';
     } else {
       d.className='mine-cell revealed';
-      var colors=['','#00d9ff','#4fffb0','#ff6b6b','#7c6fff','#ffd700','#ff9100','#ff1744','#ffffff'];
+      var colors=['','#0000ff','#008000','#ff0000','#000080','#800000','#008080','#000000','#808080'];
       d.style.color=mineGrid[i]>0?colors[mineGrid[i]]||'#fff':'';
       d.innerHTML=mineGrid[i]>0?mineGrid[i]:'';
     }
@@ -1000,10 +1000,10 @@ function revealCell(idx){
     return;
   }
   mineScore++;
-  document.getElementById('safeCount').textContent=(95-mineScore);
+  document.getElementById('safeCount').textContent=(57-mineScore);
   // Auto-reveal empty cells
   if(mineGrid[idx]===0) revealAround(idx);
-  var remaining=95-mineScore;
+  var remaining=57-mineScore;
   if(remaining===0){
     mineGameOver=true;
     var st=document.getElementById('minesStatus');
@@ -1015,10 +1015,10 @@ function revealCell(idx){
 }
 
 function revealAround(idx){
-  var r=Math.floor(idx/10),c=idx%10;
+  var r=Math.floor(idx/8),c=idx%8;
   for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
-    var nr=r+dr,nc=c+dc,ni=nr*10+nc;
-    if(nr>=0&&nr<10&&nc>=0&&nc<10&&!mineRevealed[ni]&&mineGrid[ni]!==-1){
+    var nr=r+dr,nc=c+dc,ni=nr*8+nc;
+    if(nr>=0&&nr<8&&nc>=0&&nc<8&&!mineRevealed[ni]&&mineGrid[ni]!==-1){
       mineRevealed[ni]=true;mineScore++;
       if(mineGrid[ni]===0) revealAround(ni);
     }
