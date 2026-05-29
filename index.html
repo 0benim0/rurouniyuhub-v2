@@ -107,7 +107,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--
 .alert-info{background:rgba(0,217,255,0.08);border-color:var(--accent);color:var(--accent);}
 .alert-gold{background:rgba(255,215,0,0.1);border-color:var(--accent4);color:var(--accent4);}
 
-.timer{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;color:var(--accent);font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:1px;}
+.timer{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px;text-align:center;color:var(--accent);font-size:16px;font-weight:700;margin-bottom:12px;letter-spacing:1px;}
 
 /* INPUTS */
 input,select{width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Space Mono',monospace;font-size:11px;margin-bottom:10px;transition:border 0.2s;}
@@ -115,11 +115,15 @@ input:focus{outline:none;border-color:var(--accent);}
 label{font-size:10px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px;}
 
 /* MINES */
-.mines-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:14px;}
-.mine-cell{aspect-ratio:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s;}
-.mine-cell:hover{border-color:var(--accent);background:rgba(0,217,255,0.1);transform:scale(1.05);}
-.mine-cell.revealed{background:rgba(79,255,176,0.1);border-color:var(--accent2);cursor:default;}
-.mine-cell.revealed:hover{transform:none;}
+
+.mines-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-bottom:14px;}
+.mine-cell{aspect-ratio:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;transition:all 0.15s;font-family:'Orbitron',sans-serif;}
+.mine-cell:hover{border-color:var(--accent);background:rgba(0,217,255,0.1);}
+.mine-cell.revealed{background:var(--surface3);border-color:rgba(255,255,255,0.1);cursor:default;}
+.mine-cell.revealed:hover{background:var(--surface3);}
+.mine-cell.boom{background:rgba(255,50,50,0.3);border-color:#ff4444;animation:explode 0.5s ease-out;}
+.mine-cell.bomb-shown{background:rgba(255,100,0,0.2);border-color:#ff6600;cursor:default;}
+@keyframes explode{0%{transform:scale(1);background:rgba(255,200,0,0.8);}30%{transform:scale(1.4);background:rgba(255,100,0,0.9);}60%{transform:scale(1.1);background:rgba(255,50,0,0.7);}100%{transform:scale(1);background:rgba(255,50,50,0.3);}}
 
 /* CANVAS */
 canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 auto;box-shadow:var(--glow2);}
@@ -298,12 +302,13 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
   <div class="card">
     <div class="timer" id="gmTimer">Connect wallet to start</div>
     <div style="text-align:center;padding:20px 0;">
-      <div style="font-size:60px;margin-bottom:8px;" class="float">&#128293;</div>
-      <div style="font-family:'Orbitron',sans-serif;font-size:44px;font-weight:900;color:var(--accent);margin-bottom:5px;" id="gmStreakBig">0</div>
-      <div style="color:var(--muted);font-size:10px;margin-bottom:18px;letter-spacing:2px;">CURRENT STREAK</div>
-      <button class="btn" id="gmBtn" onclick="gmCheckIn()" style="width:100%;padding:13px;font-size:12px;">SAY GM TODAY!</button>
-      <div id="gmAlert" style="margin-top:12px;"></div>
-    </div>
+  <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:#ffffff;margin-bottom:20px;letter-spacing:2px;">DAILY GM CHECK-IN</div>
+  <div style="font-size:80px;margin-bottom:16px;" class="float">&#128293;</div>
+  <div style="font-family:'Orbitron',sans-serif;font-size:72px;font-weight:900;color:var(--accent);margin-bottom:8px;line-height:1;" id="gmStreakBig">0</div>
+  <div style="color:var(--muted);font-size:13px;margin-bottom:24px;letter-spacing:2px;">CURRENT STREAK</div>
+  <button class="btn" id="gmBtn" onclick="gmCheckIn()" style="width:100%;padding:18px;font-size:14px;">SAY GM TODAY!</button>
+  <div id="gmAlert" style="margin-top:12px;"></div>
+</div>
   </div>
   <div class="card">
     <h2>GM STATS</h2>
@@ -319,9 +324,17 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
   <h1>MINES</h1>
   <p class="subtitle">Reveal mines on-chain &mdash; each = 1 TX</p>
   <div class="card">
-    <h2>MINE GRID</h2>
+    <h2>MINESWEEPER</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--muted);">💣 5 Bombs hidden — find them all!</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--accent);">Safe: <span id="safeCount">95</span></div>
+    </div>
     <div class="mines-grid" id="minesGrid"></div>
-    <button class="btn btn-outline" onclick="resetMines()" style="width:100%;">Reset Grid</button>
+    <div id="minesStatus" style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;min-height:20px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" onclick="resetMines()" style="flex:1;">🔄 New Game</button>
+      <button class="btn btn-green" id="minesClaimBtn" onclick="claimMinesScore()" style="flex:1;display:none;">⛓️ Claim TX</button>
+    </div>
     <div id="minesAlert" style="margin-top:10px;"></div>
   </div>
   <div class="card">
@@ -917,30 +930,120 @@ function gmCheckIn(){
 }
 
 // ========== MINES ==========
-var mineGrid=[];
+var mineGrid=[],mineBombs=[],mineRevealed=[],mineGameOver=false,mineScore=0;
+
 function initMines(){
-  var saved=localStorage.getItem('mineGrid_'+currentChain);
-  mineGrid=saved?JSON.parse(saved):Array(25).fill(0);renderMines();
+  mineGrid=[];mineBombs=[];mineRevealed=Array(100).fill(false);mineGameOver=false;mineScore=0;
+  // Place 5 random bombs
+  while(mineBombs.length<5){
+    var b=Math.floor(Math.random()*100);
+    if(!mineBombs.includes(b)) mineBombs.push(b);
+  }
+  // Calculate numbers
+  for(var i=0;i<100;i++){
+    if(mineBombs.includes(i)){mineGrid.push(-1);continue;}
+    var count=0,r=Math.floor(i/10),c=i%10;
+    for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
+      var nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<10&&nc>=0&&nc<10&&mineBombs.includes(nr*10+nc)) count++;
+    }
+    mineGrid.push(count);
+  }
+  document.getElementById('safeCount').textContent='95';
+  document.getElementById('minesStatus').textContent='';
+  document.getElementById('minesStatus').style.color='';
+  document.getElementById('minesClaimBtn').style.display='none';
+  renderMines();
 }
+
 function renderMines(){
   var g=document.getElementById('minesGrid');if(!g)return;g.innerHTML='';
-  mineGrid.forEach(function(r,i){
+  for(var i=0;i<100;i++){
     var d=document.createElement('div');
-    d.className='mine-cell'+(r?' revealed':'');
-    d.innerHTML=r?'&#9874;':'';
-    if(!r){d.onclick=(function(idx){return function(){revealMine(idx);};})(i);}
+    if(!mineRevealed[i]){
+      d.className='mine-cell';
+      d.innerHTML='';
+      if(!mineGameOver)(function(idx){d.onclick=function(){revealCell(idx);};})(i);
+    } else if(mineGrid[i]===-1){
+      d.className='mine-cell boom';
+      d.innerHTML='💥';
+    } else {
+      d.className='mine-cell revealed';
+      var colors=['','#00d9ff','#4fffb0','#ff6b6b','#7c6fff','#ffd700','#ff9100','#ff1744','#ffffff'];
+      d.style.color=mineGrid[i]>0?colors[mineGrid[i]]||'#fff':'';
+      d.innerHTML=mineGrid[i]>0?mineGrid[i]:'';
+    }
     g.appendChild(d);
+  }
+}
+
+function revealCell(idx){
+  if(mineGameOver||mineRevealed[idx]) return;
+  mineRevealed[idx]=true;
+  if(mineGrid[idx]===-1){
+    // BOOM!
+    mineGameOver=true;
+    renderMines();
+    setTimeout(function(){
+      // Show all bombs
+      mineBombs.forEach(function(b){
+        if(!mineRevealed[b]){
+          var cells=document.getElementById('minesGrid').children;
+          if(cells[b]){cells[b].className='mine-cell bomb-shown';cells[b].innerHTML='💣';}
+        }
+      });
+    },400);
+    var st=document.getElementById('minesStatus');
+    st.textContent='💥 BOOM! Game Over — '+mineScore+' fields revealed!';
+    st.style.color='var(--accent3)';
+    if(mineScore>0) document.getElementById('minesClaimBtn').style.display='block';
+    return;
+  }
+  mineScore++;
+  document.getElementById('safeCount').textContent=(95-mineScore);
+  // Auto-reveal empty cells
+  if(mineGrid[idx]===0) revealAround(idx);
+  var remaining=95-mineScore;
+  if(remaining===0){
+    mineGameOver=true;
+    var st=document.getElementById('minesStatus');
+    st.textContent='🎉 You Win! All safe fields revealed!';
+    st.style.color='var(--accent2)';
+    document.getElementById('minesClaimBtn').style.display='block';
+  }
+  renderMines();
+}
+
+function revealAround(idx){
+  var r=Math.floor(idx/10),c=idx%10;
+  for(var dr=-1;dr<=1;dr++) for(var dc=-1;dc<=1;dc++){
+    var nr=r+dr,nc=c+dc,ni=nr*10+nc;
+    if(nr>=0&&nr<10&&nc>=0&&nc<10&&!mineRevealed[ni]&&mineGrid[ni]!==-1){
+      mineRevealed[ni]=true;mineScore++;
+      if(mineGrid[ni]===0) revealAround(ni);
+    }
+  }
+}
+
+function resetMines(){
+  initMines();showToast('New game started! 💣');
+}
+
+function claimMinesScore(){
+  if(!hubContract){showToast('Connect wallet first');return;}
+  var btn=document.getElementById('minesClaimBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Claiming...';
+  hubContract.logGameScore(mineScore,'Minesweeper').then(function(tx){
+    showToast('Claiming...');return tx.wait();
+  }).then(function(){
+    showToast('Score claimed! +'+mineScore+' fields!');
+    btn.style.display='none';btn.disabled=false;btn.textContent='⛓️ Claim TX';
+    setTimeout(loadContractData,2000);
+  }).catch(function(e){
+    showToast('Error: '+(e.message||'').slice(0,60));
+    btn.disabled=false;btn.textContent='⛓️ Claim TX';
   });
 }
-function revealMine(idx){
-  if(!hubContract){showToast('Connect wallet first');return;}
-  if(mineGrid[idx]) return;
-  hubContract.revealMine(idx).then(function(tx){showToast('Revealing...');return tx.wait();}).then(function(){
-    mineGrid[idx]=1;localStorage.setItem('mineGrid_'+currentChain,JSON.stringify(mineGrid));
-    renderMines();showToast('Mine revealed! +1 TX');setTimeout(loadContractData,2000);
-  }).catch(function(e){showToast('Error: '+(e.message||'').slice(0,60));});
-}
-function resetMines(){mineGrid=Array(25).fill(0);localStorage.setItem('mineGrid_'+currentChain,JSON.stringify(mineGrid));renderMines();showToast('Grid reset');}
 
 // ========== MINT CHECKMATE ==========
 function mintCheckmate(){
