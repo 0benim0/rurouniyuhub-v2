@@ -671,6 +671,7 @@ function updateQuestDisplay(stats){
 window.addEventListener('load',function(){chessBoard=INIT.map(function(r){return r.slice();});
   updateGMTimer();setInterval(updateGMTimer,1000);
   initMines();renderChessBoard();
+  drawTetrisIdle();
   updateQuestDisplay(null);
   document.getElementById('homeChain').textContent=CHAINS.robinhood.name;
   document.getElementById('lbChain').textContent=CHAINS.robinhood.name;
@@ -1252,6 +1253,15 @@ var PIECES=[
   {shape:[[0,0,1],[1,1,1]],color:'#4fffb0'},{shape:[[1,1,0],[0,1,1]],color:'#ff9100'},
   {shape:[[0,1,1],[1,1,0]],color:'#ff1744'}
 ];
+function drawTetrisIdle(){
+  var canvas=document.getElementById('tetrisCanvas'),ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0a0f1e';ctx.fillRect(0,0,200,400);
+  ctx.fillStyle='#00d9ff';ctx.font='bold 16px Orbitron,monospace';ctx.textAlign='center';
+  ctx.fillText('TETRIS',100,180);
+  ctx.fillStyle='#8899bb';ctx.font='11px monospace';
+  ctx.fillText('Press PLAY to start',100,210);
+  ctx.textAlign='left';
+}
 function startTetris(){
   var canvas=document.getElementById('tetrisCanvas'),ctx=canvas.getContext('2d');
   tetrisActive=true;tetrisScore=0;
