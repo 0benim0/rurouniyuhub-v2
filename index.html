@@ -231,6 +231,7 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
   <button class="nav-btn" onclick="showPage('create',this)">Create</button>
   <button class="nav-btn" onclick="showPage('deploy',this)">Deploy</button>
   <button class="nav-btn" onclick="showPage('leaderboard',this)">Leaders</button>
+  <button class="nav-btn" onclick="showPage('stats',this)">Stats</button>
   <button class="nav-btn" onclick="showPage('profile',this)">Profile</button>
 </nav>
 
@@ -509,6 +510,26 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
     <button class="btn btn-outline" onclick="loadLeaderboard()" style="width:100%;margin-top:10px;">Refresh</button>
   </div>
 </div>
+<!-- STATS -->
+<div class="page" id="stats">
+  <h1>ANALYTICS</h1>
+  <p class="subtitle">Live onchain stats &mdash; all chains</p>
+  <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));">
+    <div class="stat"><div class="stat-label">Total V2 TX</div><div class="stat-value" id="statV2Tx">—</div></div>
+    <div class="stat"><div class="stat-label">Total Swaps</div><div class="stat-value" id="statSwaps">—</div></div>
+    <div class="stat"><div class="stat-label">Total Bridges</div><div class="stat-value" id="statBridges">—</div></div>
+    <div class="stat"><div class="stat-label">~Unique Wallets</div><div class="stat-value" id="statWallets">—</div></div>
+  </div>
+  <div class="card">
+    <h2>TX BY CHAIN</h2>
+    <div id="statChains" style="font-size:11px;color:var(--muted);text-align:center;padding:14px;">Loading...</div>
+  </div>
+  <div class="card">
+    <h2>RECENT ACTIVITY — ALL CHAINS</h2>
+    <div id="statActivity" style="font-size:11px;color:var(--muted);text-align:center;padding:14px;">Loading...</div>
+  </div>
+  <button class="btn btn-outline" onclick="loadStats()" style="width:100%;margin-top:4px;">↻ Refresh</button>
+</div>
 
 <!-- PROFILE -->
 <div class="page" id="profile">
@@ -549,7 +570,8 @@ const CHAINS = {
     factoryAddress:'0xfC2398F73A3efC1d7BBE04DAa56e6616f78C685C',
     v1Address:'0x9165Fa5dA6d0468b43A0b37E160b8BA2D8A7c7d0',
     faucet:'https://faucet.testnet.chain.robinhood.com/',
-    explorer:'https://explorer.testnet.chain.robinhood.com'
+    explorer:'https://explorer.testnet.chain.robinhood.com',
+    bridgeAddress:'0xc2e8e8B0BF8D9c00735DD832A48E57654CC0F484'
   },
   arc:{
     name:'ARC Testnet',chainId:'0x4cef52',chainIdDec:5042002,
@@ -560,7 +582,9 @@ const CHAINS = {
     v1Address:'0x50718E9194595540fF7Ef81EC31AaC15a7Ae4ac8',
     faucet:'https://faucet.circle.com/',
     explorer:'https://testnet.arcscan.app',
-    currencyName:'USDC',currencySymbol:'USDC'
+    currencyName:'USDC',currencySymbol:'USDC',
+    swapAddress:'0x7a77d9fbfDA16A0Bd80Ee8b8CAeE044dd6781119',
+bridgeAddress:'0x5674b12887D1CF23139Ee1D40238083C20361D4B'
   },
   giwa:{
     name:'GIWA Sepolia',chainId:'0x164ce',chainIdDec:91342,
@@ -571,7 +595,8 @@ const CHAINS = {
     v1Address:'0x31e68F7b2e1cC623EaFe10493A1db16C330aCfAD',
     faucet:'https://faucet.giwa.io/#/',
     explorer:'https://sepolia-explorer.giwa.io',
-    currencyName:'ETH',currencySymbol:'ETH'
+    currencyName:'ETH',currencySymbol:'ETH',
+    bridgeAddress:'0x16b92c630065f3b84130b18Bdf12522e1Fd86D76'
   },
   ink:{
     name:'INK Sepolia',chainId:'0xba5ed',chainIdDec:763373,
@@ -582,7 +607,8 @@ const CHAINS = {
     v1Address:'0x2Ab6E0364593C59018C49130602B4fBBEE77eEBd',
     faucet:'https://inkonchain.com/faucet',
     explorer:'https://explorer-sepolia.inkonchain.com',
-    currencyName:'ETH',currencySymbol:'ETH'
+    currencyName:'ETH',currencySymbol:'ETH',
+    bridgeAddress:'0x25832a57D698C9072C71aA735Be2D11A48e9a1A6'
   }
 };
 
@@ -594,7 +620,8 @@ const HUB_ABI=[
   "function migrateMyData(uint256,uint256,uint256,uint256,uint256,uint256) external",
   "function getUserStats(address) external view returns (uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool)",
   "function getRecentTxLog(uint256) external view returns (tuple(address user,string txType,string label,uint256 timestamp)[])",
-  "function isMigrationOpen() external view returns (bool)"
+  "function isMigrationOpen() external view returns (bool)",
+  "function getTxLogLength() external view returns (uint256)"
 ];
 
 const CHECKMATE_ABI=[
@@ -721,6 +748,7 @@ function showPage(name,btn){
   if(btn){document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');}
   if(name==='profile'&&walletAddress){document.getElementById('profileAddr').textContent=walletAddress;loadTxLog();}
   if(name==='leaderboard') loadLeaderboard();
+  if(name==='stats') loadStats();
   if(name==='create'){loadRecentUserNFTs();loadMyCollection();}
   if(name==='nft'&&walletAddress) loadMyCheckmateNFTs();
 }
@@ -1239,6 +1267,69 @@ function loadLeaderboard(){
       return '<div class="lb-item" style="'+(isMe?'border-color:var(--accent2);':'')+'"><div class="lb-rank '+rc+'">'+medal+'</div><div style="flex:1;"><div style="font-size:10px;font-weight:700;color:'+(isMe?'var(--accent2)':'var(--text)')+';">'+u.addr.slice(0,8)+'...'+u.addr.slice(-6)+(isMe?' (you)':'')+'</div></div><div style="font-family:\'Orbitron\',sans-serif;font-size:15px;font-weight:900;color:var(--accent);">'+u.total+'</div></div>';
     }).join('');
   }).catch(function(){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:16px;">Could not load</div>';});
+}
+// ========== STATS ==========
+async function loadStats(){
+  var SWAP_ABI=["function totalSwaps() view returns (uint256)"];
+  var BRIDGE_ABI_STATS=["function totalBridges() view returns (uint256)"];
+  var HUB_LEN_ABI=["function getTxLogLength() view returns (uint256)","function getRecentTxLog(uint256) view returns (tuple(address user,string txType,string label,uint256 timestamp)[])"];
+
+  var totalV2=0,totalSwaps=0,totalBridges=0;
+  var chainTxCounts={};
+  var allAddresses=new Set();
+  var allActivity=[];
+
+  await Promise.all(Object.entries(CHAINS).map(async function([key,chain]){
+    var rpc=new ethers.JsonRpcProvider(chain.rpc);
+    try{
+      var hub=new ethers.Contract(chain.hubAddress,HUB_LEN_ABI,rpc);
+      var len=await Promise.race([hub.getTxLogLength(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),6000))]);
+      var count=Number(len);
+      totalV2+=count;
+      chainTxCounts[chain.name]=count;
+      var recent=await Promise.race([hub.getRecentTxLog(100),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),6000))]);
+      recent.forEach(function(tx){
+        allAddresses.add(tx.user.toLowerCase());
+        allActivity.push({chain:chain.name,user:tx.user,txType:tx.txType,label:tx.label,timestamp:Number(tx.timestamp)});
+      });
+    }catch(e){}
+    if(chain.swapAddress){
+      try{
+        var swap=new ethers.Contract(chain.swapAddress,SWAP_ABI,rpc);
+        var s=await Promise.race([swap.totalSwaps(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),6000))]);
+        totalSwaps+=Number(s);
+      }catch(e){}
+    }
+    if(chain.bridgeAddress){
+      try{
+        var bridge=new ethers.Contract(chain.bridgeAddress,BRIDGE_ABI_STATS,rpc);
+        var b=await Promise.race([bridge.totalBridges(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),6000))]);
+        totalBridges+=Number(b);
+      }catch(e){}
+    }
+  }));
+
+  document.getElementById('statV2Tx').textContent=totalV2;
+  document.getElementById('statSwaps').textContent=totalSwaps;
+  document.getElementById('statBridges').textContent=totalBridges;
+  document.getElementById('statWallets').textContent=allAddresses.size;
+
+  var chainColors={'Robinhood Testnet':'#00d9ff','ARC Testnet':'#4fffb0','GIWA Sepolia':'#a78bfa','INK Sepolia':'#ffd700'};
+  document.getElementById('statChains').innerHTML=Object.entries(chainTxCounts).map(function([name,count]){
+    var max=Math.max(...Object.values(chainTxCounts))||1;
+    var pct=Math.round(count/max*100);
+    var color=chainColors[name]||'#00d9ff';
+    return '<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;"><span>'+name+'</span><span style="color:var(--muted);">'+count+' TX</span></div><div style="background:var(--surface2);border-radius:4px;height:5px;"><div style="background:'+color+';width:'+pct+'%;height:100%;border-radius:4px;"></div></div></div>';
+  }).join('');
+
+  allActivity.sort(function(a,b){return b.timestamp-a.timestamp;});
+  var chainBadgeColors={'Robinhood Testnet':'#00d9ff','ARC Testnet':'#4fffb0','GIWA Sepolia':'#a78bfa','INK Sepolia':'#ffd700'};
+  document.getElementById('statActivity').innerHTML=allActivity.slice(0,10).map(function(tx){
+    var t=new Date(tx.timestamp*1000).toLocaleTimeString();
+    var color=chainBadgeColors[tx.chain]||'#00d9ff';
+    var shortChain=tx.chain.replace(' Testnet','').replace(' Sepolia','');
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:10px;"><span style="background:rgba(0,0,0,0.3);border:1px solid '+color+';color:'+color+';padding:2px 6px;border-radius:4px;font-size:9px;white-space:nowrap;">'+shortChain+'</span><span style="flex:1;color:var(--text);">'+tx.user.slice(0,8)+'...'+tx.user.slice(-4)+'</span><span class="tx-badge b-'+tx.txType+'">'+tx.txType+'</span><span style="color:var(--muted);white-space:nowrap;">'+t+'</span></div>';
+  }).join('');
 }
 
 // ========== TETRIS ==========
