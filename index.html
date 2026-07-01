@@ -697,6 +697,7 @@ window.addEventListener('load',function(){chessBoard=INIT.map(function(r){return
   updateGMTimer();setInterval(updateGMTimer,1000);
   initMines();renderChessBoard();
   drawTetrisIdle();
+  drawFlappyIdle();
   updateQuestDisplay(null);
   document.getElementById('homeChain').textContent=CHAINS.robinhood.name;
   document.getElementById('lbChain').textContent=CHAINS.robinhood.name;
@@ -1344,6 +1345,19 @@ var PIECES=[
 function drawTetrisIdle(){
   var canvas=document.getElementById('tetrisCanvas'),ctx=canvas.getContext('2d');
   ctx.fillStyle='#0a0f1e';ctx.fillRect(0,0,200,400);
+  ctx.strokeStyle='rgba(0,217,255,0.05)';ctx.lineWidth=1;
+  for(var i=0;i<=10;i++){ctx.beginPath();ctx.moveTo(i*20,0);ctx.lineTo(i*20,400);ctx.stroke();}
+  for(var j=0;j<=20;j++){ctx.beginPath();ctx.moveTo(0,j*20);ctx.lineTo(200,j*20);ctx.stroke();}
+  var idleBlocks=[
+    {x:0,y:340,c:'#00d9ff'},{x:20,y:340,c:'#00d9ff'},{x:40,y:340,c:'#00d9ff'},{x:60,y:340,c:'#00d9ff'},
+    {x:120,y:320,c:'#ffd700'},{x:140,y:320,c:'#ffd700'},{x:120,y:340,c:'#ffd700'},{x:140,y:340,c:'#ffd700'},
+    {x:0,y:300,c:'#ff6b6b'},{x:0,y:320,c:'#ff6b6b'},{x:0,y:340,c:'#ff6b6b'},{x:20,y:300,c:'#ff6b6b'},
+    {x:160,y:260,c:'#4fffb0'},{x:160,y:280,c:'#4fffb0'},{x:140,y:280,c:'#4fffb0'},{x:120,y:280,c:'#4fffb0'},
+    {x:80,y:360,c:'#a78bfa'},{x:100,y:360,c:'#a78bfa'},{x:80,y:380,c:'#a78bfa'},{x:100,y:380,c:'#a78bfa'}
+  ];
+  ctx.globalAlpha=0.5;
+  idleBlocks.forEach(function(b){ctx.fillStyle=b.c;ctx.fillRect(b.x,b.y,19,19);});
+  ctx.globalAlpha=1;
   ctx.fillStyle='#00d9ff';ctx.font='bold 16px Orbitron,monospace';ctx.textAlign='center';
   ctx.fillText('TETRIS',100,180);
   ctx.fillStyle='#8899bb';ctx.font='11px monospace';
@@ -1408,6 +1422,18 @@ var flappyActive=false,flappyScore=0,bird={},pipes=[],flappyAnim=null,clouds=[],
 function initClouds(W){
   clouds=[];
   for(var i=0;i<6;i++) clouds.push({x:Math.random()*W,y:20+Math.random()*80,w:50+Math.random()*60,speed:0.4+Math.random()*0.4});
+}
+function drawFlappyIdle(){
+  var canvas=document.getElementById('flappyCanvas'),ctx=canvas.getContext('2d');
+  var W=canvas.width,H=canvas.height;
+  initClouds(W);
+  drawNatureBg(ctx,W,H);
+  drawPipe(ctx,340,120,110,H);
+  drawBird(ctx,80,H/2,0);
+  ctx.fillStyle='rgba(0,0,0,0.35)';ctx.beginPath();ctx.roundRect(W/2-90,10,180,34,8);ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold 15px Orbitron,monospace';ctx.textAlign='center';
+  ctx.fillText('FLAPPY BIRD',W/2,32);
+  ctx.textAlign='left';
 }
 
 function startFlappy(){
