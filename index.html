@@ -441,9 +441,12 @@ canvas{border:1px solid var(--border2);border-radius:8px;display:block;margin:0 
     <button class="btn" id="nftBtn" onclick="mintCheckmate()" style="width:100%;padding:12px;margin-bottom:10px;">MINT $CHECKmate NFT</button>
     <div id="nftAlert"></div>
   </div>
-  <div class="card">
-    <h2>YOUR $CHECKmate NFTs</h2>
-    <div id="myCheckmateNFTs" style="color:var(--muted);font-size:11px;text-align:center;padding:14px;">Connect wallet to see your NFTs</div>
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:18px;">&#9822;</span>
+      <span style="font-size:13px;color:var(--text);">Geminted von dir auf <span id="myMintChainName" style="color:var(--accent);font-weight:700;">Robinhood</span></span>
+    </div>
+    <span id="myMintCount" style="font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--accent);">0</span>
   </div>
 </div>
 
@@ -1088,13 +1091,13 @@ function mintCheckmate(){
 }
 function loadMyCheckmateNFTs(){
   if(!checkmateContract||!walletAddress) return;
+  document.getElementById('myMintChainName').textContent=CHAINS[currentChain].name.replace(' Testnet','').replace(' Sepolia','');
   checkmateContract.getTokensOfOwner(walletAddress).then(function(tokens){
-    var cont=document.getElementById('myCheckmateNFTs');
-    if(!tokens.length){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:14px;">No $CHECKmate NFTs yet</div>';return;}
-    cont.innerHTML='<div class="nft-grid">'+tokens.slice(0,8).map(function(id){
-      return '<div class="nft-card"><div style="width:100%;aspect-ratio:1;background:linear-gradient(135deg,#1a2440,#0e1828);display:flex;align-items:center;justify-content:center;font-size:40px;">&#9822;</div><div class="nft-card-info"><div class="nft-card-name">$CHECKmate #'+Number(id)+'</div><div class="nft-card-sub">Token ID: '+Number(id)+'</div></div></div>';
-    }).join('')+'</div>';
-  }).catch(function(e){console.error(e);});
+    document.getElementById('myMintCount').textContent=tokens.length;
+  }).catch(function(e){
+    console.error(e);
+    document.getElementById('myMintCount').textContent='—';
+  });
 }
 
 // ========== CREATE NFT ==========
