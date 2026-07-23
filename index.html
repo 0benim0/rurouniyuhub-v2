@@ -612,6 +612,24 @@ bridgeAddress:'0x5674b12887D1CF23139Ee1D40238083C20361D4B'
     bridgeAddress:'0x25832a57D698C9072C71aA735Be2D11A48e9a1A6'
   }
 };
+const providerCache = {};
+function getRpcProvider(chainKey) {
+  if (!providerCache[chainKey]) {
+    const c = CHAINS[chainKey];
+    const p = new ethers.JsonRpcProvider(c.rpc, c.chainIdDec, { batchMaxCount: 1 });
+    if (chainKey === 'arc') {
+      const originalSend = p.send.bind(p);
+      let queue = Promise.resolve();
+      p.send = (method, params) => {
+        const run = queue.then(() => originalSend(method, params));
+        queue = run.catch(() => {}).then(() => new Promise(r => setTimeout(r, 1100)));
+        return run;
+      };
+    }
+    providerCache[chainKey] = p;
+  }
+  return providerCache[chainKey];
+}
 
 const HUB_ABI=[
   "function gmCheckIn() external",
@@ -1152,7 +1170,7 @@ function mintUserNFT(){
 }
 function loadRecentUserNFTs(){
   var cont=document.getElementById('recentUserNFTs');if(!cont) return;
-  var rpc=new ethers.JsonRpcProvider(CHAINS[currentChain].rpc);
+  var rpc=getRpcProvider(currentChain);
   var rc=new ethers.Contract(CHAINS[currentChain].factoryAddress,FACTORY_ABI,rpc);
   rc.getRecentNFTs(6).then(function(nfts){
     if(!nfts.length){cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:14px;grid-column:1/-1;">No community NFTs yet. Be the first!</div>';return;}
@@ -1186,7 +1204,7 @@ function loadV1Stats(){
   if(!walletAddress){showToast('Connect wallet first');return;}
   var btn=document.getElementById('loadV1Btn');
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Reading...';
-  var rpc=new ethers.JsonRpcProvider(CHAINS[currentChain].rpc);
+  var rpc=getRpcProvider(currentChain);
   var v1=new ethers.Contract(CHAINS[currentChain].v1Address,V1_ABI,rpc);
   v1.getUserStats(walletAddress).then(function(s){
     var mines=Number(s[0]),streak=Number(s[1]),gms=Number(s[2]),nfts=Number(s[3]),deploys=Number(s[4]),total=Number(s[5]);
@@ -1250,7 +1268,7 @@ function loadTxLog(){
 function loadLeaderboard(){
   var cont=document.getElementById('lbList');
   cont.innerHTML='<div style="color:var(--muted);font-size:10px;text-align:center;padding:16px;">Loading...</div>';
-  var rpc=new ethers.JsonRpcProvider(CHAINS[currentChain].rpc);
+  var rpc=getRpcProvider(currentChain);
   var hub=new ethers.Contract(CHAINS[currentChain].hubAddress,HUB_ABI,rpc);
   hub.getRecentTxLog(50).then(function(txs){
     var seen=new Set(),addrs=[];
@@ -1282,14 +1300,14 @@ async function loadStats(){
   var allActivity=[];
 
   await Promise.all(Object.entries(CHAINS).map(async function([key,chain]){
-    var rpc=new ethers.JsonRpcProvider(chain.rpc);
+    var rpc=getRpcProvider(key);
     try{
       var hub=new ethers.Contract(chain.hubAddress,HUB_LEN_ABI,rpc);
-      var len=await Promise.race([hub.getTxLogLength(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),6000))]);
+      var len=await Promise.race([hub.getTxLogLength(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))]);
       var count=Number(len);
       totalV2+=count;
       chainTxCounts[chain.name]=count;
-      var recent=await Promise.race([hub.getRecentTxLog(100),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),6000))]);
+      var recent=await Promise.race([hub.getRecentTxLog(100),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))]);
       recent.forEach(function(tx){
         allAddresses.add(tx.user.toLowerCase());
         allActivity.push({chain:chain.name,user:tx.user,txType:tx.txType,label:tx.label,timestamp:Number(tx.timestamp)});
@@ -1298,14 +1316,14 @@ async function loadStats(){
     if(chain.swapAddress){
       try{
         var swap=new ethers.Contract(chain.swapAddress,SWAP_ABI,rpc);
-        var s=await Promise.race([swap.totalSwaps(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),6000))]);
+        var s=await Promise.race([swap.totalSwaps(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))]);
         totalSwaps+=Number(s);
       }catch(e){}
     }
     if(chain.bridgeAddress){
       try{
         var bridge=new ethers.Contract(chain.bridgeAddress,BRIDGE_ABI_STATS,rpc);
-        var b=await Promise.race([bridge.totalBridges(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),6000))]);
+        var b=await Promise.race([bridge.totalBridges(),new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),10000))]);
         totalBridges+=Number(b);
       }catch(e){}
     }
